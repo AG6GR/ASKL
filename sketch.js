@@ -38,12 +38,45 @@ function updatePosition() {
 
   leg_left.position.x = person_pos.x - 200;
   leg_left.position.y = person_pos.y - 25;
-  leg_left.rotation = 45;
+  leg_left.rotation = leg_left.rotation;
 
   leg_right.position.x = person_pos.x - 200;
   leg_right.position.y = person_pos.y + 25;
-  leg_right.rotation = -45;
+  leg_right.rotation = leg_right.rotation;
 
+}
+
+// Update the sprite positions based on keys pressed
+function changePosition() {
+  if (keyWentDown("a")) {
+    if (leg_left.rotation > 60 || leg_right.rotation < -60) {
+      leg_left.rotation = leg_left.rotation+2;
+      leg_right.rotation = leg_right.rotation-2;
+    }
+    else {
+      leg_left.rotation = leg_left.rotation+5;
+      leg_right.rotation = leg_right.rotation-5;
+    }
+  }
+  if (keyWentUp("a")) {
+    leg_left.rotation = leg_left.rotation-2;
+    leg_right.rotation = leg_right.rotation+2;
+  }
+
+  if (keyWentDown("s")) {
+    if (leg_left.rotation < 2 || leg_right.rotation > -2) {
+      leg_left.rotation = leg_left.rotation-2;
+      leg_right.rotation = leg_right.rotation+2;
+    }
+    else {
+      leg_left.rotation = leg_left.rotation-5;
+      leg_right.rotation = leg_right.rotation+5;
+    }
+  }
+  if (keyWentUp("s")) {
+    leg_left.rotation = leg_left.rotation+2;
+    leg_right.rotation = leg_right.rotation-2;
+  }
 }
 
 // Draw background
@@ -84,6 +117,7 @@ function draw() {
   person_pos.x = mouseX;
   person_pos.y = mouseY;
   updatePosition()
+  changePosition()
 
   // Draw the things
   drawBackground()

@@ -3,23 +3,18 @@ var cnv;
 var w = 1000;
 var h = 500;
 
+// All body part position offsets
+var LEG_CENTER, UPPER_ARM_CENTER, LOWER_ARM_CENTER;
+
 // Position Vector
 var person_pos;
 
 // Sprites
 var body, leg_left, leg_right;
-
+var arm_left_upper, arm_left_lower;
+var arm_right_upper, arm_right_lower;
 
 // ========== CALLBACKS/EVENT HANLDERS ========== //
-
-// Keyboard event handling
-function keyPressed() {
-  if (keyCode === LEFT_ARROW) {
-    value = 255;
-  } else if (keyCode === RIGHT_ARROW) {
-    value = 0;
-  }
-}
 
 // Keyboard event handling
 function keyPressed() {
@@ -36,13 +31,25 @@ function updatePosition() {
   body.position.x = person_pos.x;
   body.position.y = person_pos.y;
 
-  leg_left.position.x = person_pos.x - 200;
-  leg_left.position.y = person_pos.y - 25;
+  leg_left.position.set(person_pos).add(LEG_CENTER);
+  leg_left.rotation = 45;
   leg_left.rotation = leg_left.rotation;
 
-  leg_right.position.x = person_pos.x - 200;
-  leg_right.position.y = person_pos.y + 25;
+  leg_right.position.set(person_pos).add(LEG_CENTER);
+  leg_right.rotation = -45;
   leg_right.rotation = leg_right.rotation;
+
+  arm_left_upper.position.set(person_pos).add(UPPER_ARM_CENTER);
+  arm_left_upper.rotation = 45;
+
+  arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(arm_left_upper.rotation).add(arm_left_upper.position)
+  arm_left_lower.rotation = -45;
+
+  arm_right_upper.position.set(person_pos).add(UPPER_ARM_CENTER);
+  arm_right_upper.rotation = -45;
+  
+  arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(arm_right_upper.rotation).add(arm_left_upper.position)
+  arm_right_lower.rotation = 45;
 
 }
 
@@ -94,9 +101,21 @@ function preload() {
   person_pos = createVector(width/2, height/2);
 
   //img = loadImage('');
-  body = createSprite(person_pos.x, person_pos.y, 200, 50)
-  leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 200, 50)
-  leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 200, 50)
+
+  // Define position offsets
+  LEG_CENTER = createVector(-140, 0, 0);
+  UPPER_ARM_CENTER = createVector(40, 0, 0);
+  LOWER_ARM_CENTER = createVector(0, 80, 0);
+
+  // Create body part Sprite objects
+  body = createSprite(person_pos.x, person_pos.y, 200, 60)
+  leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 240, 40)
+  leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 240, 40)
+
+  arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
+  arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
+  arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
+  arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
 
 }
 

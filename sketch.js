@@ -32,11 +32,9 @@ function updatePosition() {
   body.position.y = person_pos.y;
 
   leg_left.position.set(person_pos).add(LEG_CENTER);
-  leg_left.rotation = 45;
   leg_left.rotation = leg_left.rotation;
 
   leg_right.position.set(person_pos).add(LEG_CENTER);
-  leg_right.rotation = -45;
   leg_right.rotation = leg_right.rotation;
 
   arm_left_upper.position.set(person_pos).add(UPPER_ARM_CENTER);

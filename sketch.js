@@ -7,7 +7,7 @@ var h = 500;
 var LEG_CENTER, UPPER_ARM_CENTER, LOWER_ARM_CENTER;
 
 // Position Vector
-var person_pos;
+var person_pos, person_rot;
 
 // Sprites
 var body, leg_left, leg_right;
@@ -28,27 +28,26 @@ function keyPressed() {
 // ========== CUSTOM FUNCTIONS ========== //
 // Update all the sprite positions based on the person's location
 function updatePosition() {
-  body.position.x = person_pos.x;
-  body.position.y = person_pos.y;
+  body.position.set(person_pos);
+  body.rotation = person_rot;
 
-  leg_left.position.set(person_pos).add(LEG_CENTER);
-  leg_left.rotation = leg_left.rotation;
-
-  leg_right.position.set(person_pos).add(LEG_CENTER);
-  leg_right.rotation = leg_right.rotation;
-
-  arm_left_upper.position.set(person_pos).add(UPPER_ARM_CENTER);
-  arm_left_upper.rotation = 45;
-
-  arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(arm_left_upper.rotation).add(arm_left_upper.position)
-  arm_left_lower.rotation = -45;
-
-  arm_right_upper.position.set(person_pos).add(UPPER_ARM_CENTER);
-  arm_right_upper.rotation = -45;
+  leg_left.rotation = body.rotation + leg_left.rel_rotation;
+  leg_left.position.set(LEG_CENTER).rotate(body.rotation).add(body.position);
   
-  arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(arm_right_upper.rotation).add(arm_left_upper.position)
-  arm_right_lower.rotation = 45;
+  leg_right.rotation = body.rotation + leg_right.rel_rotation;
+  leg_right.position.set(LEG_CENTER).rotate(body.rotation).add(body.position);
 
+  arm_left_upper.rotation = body.rotation + arm_left_upper.rel_rotation;
+  arm_left_upper.position.set(UPPER_ARM_CENTER).rotate(body.rotation).add(body.position);
+
+  arm_left_lower.rotation = body.rotation + arm_left_upper.rel_rotation + arm_left_lower.rel_rotation;
+  arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(arm_left_upper.rel_rotation).add(UPPER_ARM_CENTER).rotate(body.rotation).add(body.position);
+
+  arm_right_upper.rotation = body.rotation + arm_right_upper.rel_rotation;
+  arm_right_upper.position.set(UPPER_ARM_CENTER).rotate(body.rotation).add(body.position);
+
+  arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
+  arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(arm_right_upper.rel_rotation).add(UPPER_ARM_CENTER).rotate(body.rotation).add(body.position);
 }
 
 // Update the sprite positions based on keys pressed
@@ -97,6 +96,7 @@ function drawBackground() {
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
   person_pos = createVector(width/2, height/2);
+  person_rot = 0.0;
 
   //img = loadImage('');
 
@@ -108,13 +108,19 @@ function preload() {
   // Create body part Sprite objects
   body = createSprite(person_pos.x, person_pos.y, 200, 60)
   leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 240, 40)
+  leg_left.rel_rotation = 45.0;
   leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 240, 40)
+  leg_right.rel_rotation = -30.0;
 
   arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
+  arm_left_upper.rel_rotation = 0.0
   arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
-  arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
-  arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
+  arm_left_lower.rel_rotation = 45.0
 
+  arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
+  arm_right_upper.rel_rotation = 180.0
+  arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
+  arm_right_lower.rel_rotation = 45.0
 }
 
 function centerCanvas() {
@@ -127,12 +133,19 @@ function setup() {
   cnv = createCanvas(w, h);
   centerCanvas();
   frameRate(60)
+  angleMode(DEGREES)
 }
 
 function draw() {
   // Update positions
   person_pos.x = mouseX;
   person_pos.y = mouseY;
+
+  person_rot += 1.0
+
+  arm_left_upper.rel_rotation += 2.0
+  arm_right_upper.rel_rotation += 2.0
+
   updatePosition()
   changePosition()
 

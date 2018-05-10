@@ -108,10 +108,10 @@ function changePosition() {
     else {
       lowerOpen = -2*open;
     }
-    arm_right_lower.rotation = arm_right_lower.rotation + lowerOpen;
-    arm_left_lower.rotation = arm_left_lower.rotation + lowerOpen;
+    arm_right_lower.rel_rotation = arm_right_lower.rel_rotation + lowerOpen;
+    arm_left_lower.rel_rotation = arm_left_lower.rel_rotation + lowerOpen;
 
-    if (arm_right_lower.rotation > 90 || arm_right_lower.rotation < -90) {
+    if (arm_right_lower.rel_rotation > 90 || arm_right_lower.rel_rotation < -90) {
       arm_right_lower.clockwise = -1*arm_right_lower.clockwise;
     }
   }
@@ -123,8 +123,8 @@ function changePosition() {
     else {
       lowerClose = -2*close;
     }
-    arm_right_lower.rotation = arm_right_lower.rotation - lowerClose;
-    arm_left_lower.rotation = arm_left_lower.rotation - lowerClose;
+    arm_right_lower.rel_rotation = arm_right_lower.rel_rotation - lowerClose;
+    arm_left_lower.rel_rotation = arm_left_lower.rel_rotation - lowerClose;
   }
 }
 

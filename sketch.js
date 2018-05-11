@@ -22,6 +22,7 @@ var person_rot;
 var body, leg_left, leg_right;
 var arm_left_upper, arm_left_lower;
 var arm_right_upper, arm_right_lower;
+var water;
 
 // ========== CALLBACKS/EVENT HANLDERS ========== //
 
@@ -41,15 +42,15 @@ function keyPressed() {
     arm_left_upper.vel_rotation = ARM_UPPER_VEL_ROTATION;
   } else if (keyCode == 76) {
     // L key
-    if (arm_right_lower.clockwise) {
-      arm_right_lower.vel_rotation = ARM_LOWER_VEL_ROTATION;
-    } else {
-      arm_right_lower.vel_rotation = -ARM_LOWER_VEL_ROTATION;
-    }
     if (arm_left_lower.clockwise) {
       arm_left_lower.vel_rotation = ARM_LOWER_VEL_ROTATION;
     } else {
       arm_left_lower.vel_rotation = -ARM_LOWER_VEL_ROTATION;
+    }
+    if (arm_right_lower.clockwise) {
+      arm_right_lower.vel_rotation = ARM_LOWER_VEL_ROTATION;
+    } else {
+      arm_right_lower.vel_rotation = -ARM_LOWER_VEL_ROTATION;
     }
   }
 }
@@ -64,12 +65,12 @@ function keyReleased() {
     leg_right.vel_rotation = 0;
   } else if (keyCode == 75) {
     // K key
-    arm_right_upper.vel_rotation = 0;
     arm_left_upper.vel_rotation = 0;
+    arm_right_upper.vel_rotation = 0;
   } else if (keyCode == 76) {
     // L key
-    arm_right_lower.vel_rotation = 0;
     arm_left_lower.vel_rotation = 0;
+    arm_right_lower.vel_rotation = 0;
   }
 }
 
@@ -96,6 +97,17 @@ function updatePosition() {
 
   arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
   arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+
+  for (var i = 0; i < width; i++) {
+    var y = water[i].position.y
+    var x = water[i].position.x
+    if (y <= height/2 || y >= height) {
+      water[i].setVelocity(water[i].velocity.x, -water[i].velocity.y);
+    }
+    if (x <= 0 || x >= width) {
+      water[i].setVelocity(-water[i].velocity.x, water[i].velocity.y);
+    }
+  }
 }
 
 // Move body part positions based on current velocities
@@ -103,21 +115,29 @@ function updateVelocity() {
   leg_left.rel_rotation = Math.min(Math.max(leg_left.rel_rotation + leg_left.vel_rotation, -30), 30)
   leg_right.rel_rotation = Math.min(Math.max(leg_right.rel_rotation + leg_right.vel_rotation, -30), 30)
 
-  arm_right_upper.rel_rotation += arm_right_upper.vel_rotation;
   arm_left_upper.rel_rotation += arm_left_upper.vel_rotation;
-
+  arm_right_upper.rel_rotation += arm_right_upper.vel_rotation;
+  
   // Swap direction once lower arm reaches 90 or 270 degrees
-  if (arm_right_lower.rel_rotation <= 90 || arm_right_lower.rel_rotation >= 270) {
-    arm_right_lower.clockwise = !arm_right_lower.clockwise;
-    arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
-  }
-  arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
-
   if (arm_left_lower.rel_rotation <= 90 || arm_left_lower.rel_rotation >= 270) {
     arm_left_lower.clockwise = !arm_left_lower.clockwise;
     arm_left_lower.vel_rotation = -arm_left_lower.vel_rotation;
   }
   arm_left_lower.rel_rotation += arm_left_lower.vel_rotation
+
+  if (arm_right_lower.rel_rotation <= 90 || arm_right_lower.rel_rotation >= 270) {
+    arm_right_lower.clockwise = !arm_right_lower.clockwise;
+    arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
+  }
+  arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
+}
+
+function createWater() {
+  for (var i = 0; i < width; i++) {
+    var waterMolecule = createSprite(random(0,width),random(height/2,height), 2, 2);
+    waterMolecule.setSpeed(random(1,2), random(0, 360));
+    water.add(waterMolecule);
+  }
 }
 
 // Draw background
@@ -161,30 +181,37 @@ function setup() {
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 
   // Create body part Sprite objects
-  body = createSprite(person_pos.x, person_pos.y, 200, 60)
-  body.addImage(img_body);
+  arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
+  arm_left_upper.addImage(img_upper_arm);
+  arm_left_upper.rel_rotation = 0.0
+  arm_left_upper.depth = -1
+  arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
+  arm_left_lower.addImage(img_lower_arm);
+  arm_left_lower.rel_rotation = 180
+  arm_left_lower.depth = 1.1
 
   leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 240, 40)
   leg_left.addImage(img_leg);
   leg_left.rel_rotation = 45.0;
+  leg_left.depth = -1
+
+  body = createSprite(person_pos.x, person_pos.y, 200, 60)
+  body.addImage(img_body);
+  body.depth = 0
 
   leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 240, 40)
   leg_right.addImage(img_leg);
   leg_right.rel_rotation = -30.0;
-
-  arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
-  arm_left_upper.addImage(img_upper_arm);
-  arm_left_upper.rel_rotation = 0.0
-  arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
-  arm_left_lower.addImage(img_lower_arm);
-  arm_left_lower.rel_rotation = 180
+  leg_right.depth = 1
 
   arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
   arm_right_upper.addImage(img_upper_arm);
   arm_right_upper.rel_rotation = 180.0
+  arm_right_upper.depth = 1
   arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
   arm_right_lower.addImage(img_lower_arm);
   arm_right_lower.rel_rotation = 180
+  arm_right_lower.depth = -1.1
 
   // Angular velocities
   leg_left.vel_rotation = 0;
@@ -197,6 +224,9 @@ function setup() {
   arm_right_upper.vel_rotation = 0;
   arm_right_lower.vel_rotation = 0;
   arm_right_lower.clockwise = true
+
+  water = new Group();
+  createWater()
 }
 
 function draw() {

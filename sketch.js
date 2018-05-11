@@ -3,6 +3,9 @@ var cnv;
 var w = 750;
 var h = 500;
 
+// Image assets
+var img_body, img_leg, img_lower_arm, img_upper_arm;
+
 // All body part position offsets
 var LEG_CENTER, UPPER_ARM_CENTER, LOWER_ARM_CENTER;
 
@@ -13,6 +16,7 @@ var ARM_LOWER_VEL_ROTATION = 5
 
 // Position Vector
 var person_pos;
+var person_rot;
 
 // Sprites
 var body, leg_left, leg_right;
@@ -102,14 +106,14 @@ function updateVelocity() {
   arm_right_upper.rel_rotation += arm_right_upper.vel_rotation;
   arm_left_upper.rel_rotation += arm_left_upper.vel_rotation;
 
-  // Swap direction once lower arm reaches 0 or 90 degrees
-  if (arm_right_lower.rel_rotation <= 0 || arm_right_lower.rel_rotation >= 90) {
+  // Swap direction once lower arm reaches 90 or 270 degrees
+  if (arm_right_lower.rel_rotation <= 90 || arm_right_lower.rel_rotation >= 270) {
     arm_right_lower.clockwise = !arm_right_lower.clockwise;
     arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
   }
   arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
 
-  if (arm_left_lower.rel_rotation <= 0 || arm_left_lower.rel_rotation >= 90) {
+  if (arm_left_lower.rel_rotation <= 90 || arm_left_lower.rel_rotation >= 270) {
     arm_left_lower.clockwise = !arm_left_lower.clockwise;
     arm_left_lower.vel_rotation = -arm_left_lower.vel_rotation;
   }
@@ -128,32 +132,59 @@ function drawBackground() {
 
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
+  // Preload all image assets
+  img_body = loadImage("images/body.png");
+  img_leg = loadImage("images/leg.png");
+  img_lower_arm = loadImage("images/lower_arm.png");
+  img_upper_arm = loadImage("images/upper_arm.png");
+}
+
+function centerCanvas() {
+  var x = (windowWidth - w) / 2;
+  var y = (windowHeight - h) / 2;
+  cnv.position(x, y);
+}
+
+function setup() {
+  // Setup Canvas
+  cnv = createCanvas(w, h);
+  centerCanvas();
+  frameRate(60)
+
+  // Setup swimmer
   person_pos = createVector(width/2, height/2);
   person_rot = 0.0;
 
-  //img = loadImage('');
-
   // Define position offsets
   LEG_CENTER = createVector(-140, 0, 0);
-  UPPER_ARM_CENTER = createVector(40, 0, 0);
+  UPPER_ARM_CENTER = createVector(20, 0, 0);
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 
   // Create body part Sprite objects
   body = createSprite(person_pos.x, person_pos.y, 200, 60)
+  body.addImage(img_body);
+
   leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 240, 40)
+  leg_left.addImage(img_leg);
   leg_left.rel_rotation = 45.0;
+
   leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 240, 40)
+  leg_right.addImage(img_leg);
   leg_right.rel_rotation = -30.0;
 
   arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
+  arm_left_upper.addImage(img_upper_arm);
   arm_left_upper.rel_rotation = 0.0
   arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
-  arm_left_lower.rel_rotation = 45.0
+  arm_left_lower.addImage(img_lower_arm);
+  arm_left_lower.rel_rotation = 180
 
   arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
+  arm_right_upper.addImage(img_upper_arm);
   arm_right_upper.rel_rotation = 180.0
   arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
-  arm_right_lower.rel_rotation = 45.0
+  arm_right_lower.addImage(img_lower_arm);
+  arm_right_lower.rel_rotation = 180
 
   // Angular velocities
   leg_left.vel_rotation = 0;
@@ -166,18 +197,6 @@ function preload() {
   arm_right_upper.vel_rotation = 0;
   arm_right_lower.vel_rotation = 0;
   arm_right_lower.clockwise = true
-}
-
-function centerCanvas() {
-  var x = (windowWidth - w) / 2;
-  var y = (windowHeight - h) / 2;
-  cnv.position(x, y);
-}
-
-function setup() {
-  cnv = createCanvas(w, h);
-  centerCanvas();
-  frameRate(60)
 }
 
 function draw() {

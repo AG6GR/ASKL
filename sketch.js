@@ -166,8 +166,8 @@ function drawBackground() {
 function preload() {
   // Preload all image assets
   img_body = loadImage("images/body.png");
-  img_leg = loadImage("images/leg.png");
-  img_lower_arm = loadImage("images/lower_arm.png");
+  img_leg = loadImage("images/leg2.png");
+  img_lower_arm = loadImage("images/lower_arm2.png");
   img_upper_arm = loadImage("images/upper_arm.png");
 }
 
@@ -188,7 +188,7 @@ function setup() {
   person_rot = 0.0;
 
   // Define position offsets
-  LEG_CENTER = createVector(-140, 0, 0);
+  LEG_CENTER = createVector(-128, 7, 0);
   UPPER_ARM_CENTER = createVector(20, 0, 0);
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 

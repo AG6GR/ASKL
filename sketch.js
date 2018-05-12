@@ -5,6 +5,12 @@ var h = 600;
 var PIX_PER_M = 250
 var WATER_LEVEL = h / 2;
 
+// Game state machine
+var gamestate = 0;
+STATE_MENU = 0
+STATE_RUNNING = 1
+STATE_END = 2
+
 // Image assets
 var img_body, img_leg, img_lower_arm, img_upper_arm;
 
@@ -36,6 +42,9 @@ var water; // list of all water molecules
 
 // Keyboard event handling
 function keyPressed() {
+  if (gamestate == STATE_END) {
+    return;
+  }
   if (keyCode == 65) {
     // A key
     leg_left.vel_rotation = LEG_VEL_ROTATION;
@@ -82,11 +91,23 @@ function keyReleased() {
   }
 }
 
+function keyTyped() {
+  if (keyCode == 114) {
+    console.log("Resetting!")
+    gamestate = STATE_RUNNING;
+    resetGame()
+    updateForce()
+    updatePosition()
+    updateVelocity()
+    simulateWater()
+  }
+}
+
 // ========== CUSTOM FUNCTIONS ========== //
 // Update all the sprite positions based on the person's location
 function updatePosition() {
-  //person_pos.y += person_vel.y
-  person_pos.add(person_vel)
+  person_pos.y += person_vel.y
+  //person_pos.add(person_vel)
   swim_distance += person_vel.x
   person_rot += person_vel_rot;
 
@@ -150,7 +171,6 @@ function updateForce() {
 
   // Passively sink head first
   person_vel_rot += 0.1
-  person_vel.y += 0.25
 
   // If they're outside the water, fall faster
   if (person_pos.y < WATER_LEVEL) {
@@ -160,6 +180,7 @@ function updateForce() {
 
   // Drag force
   person_vel.mult(0.7)
+  person_vel.y += 0.5
   person_vel_rot *= 0.7
 }
 
@@ -201,6 +222,14 @@ function drawBackground() {
   rect(0, WATER_LEVEL, w, WATER_LEVEL);
 }
 
+function resetGame() {
+  // Setup swimmer
+  person_pos = createVector(width/2 + 50, WATER_LEVEL);
+  person_rot = 0.0;
+  person_vel = createVector(0, 0);
+  person_vel_rot = 0.0;
+  swim_distance = 0;
+}
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
   // Preload all image assets
@@ -222,17 +251,12 @@ function setup() {
   centerCanvas();
   frameRate(60)
 
-  // Setup swimmer
-  person_pos = createVector(width/2 + 50, WATER_LEVEL);
-  person_rot = 0.0;
-  person_vel = createVector(0, 0);
-  person_vel_rot = 0.0;
-  swim_distance = 0;
-
   // Define position offsets
   LEG_CENTER = createVector(-125, 8, 0);
   UPPER_ARM_CENTER = createVector(20, 0, 0);
   LOWER_ARM_CENTER = createVector(0, 80, 0);
+
+  resetGame()
 
   // Create body part Sprite objects
   bodyParts = new Group();
@@ -304,10 +328,26 @@ function setup() {
 
 function draw() {
   // Update game state
-  updateForce()
-  updatePosition()
-  updateVelocity()
-  simulateWater()
+  if (gamestate == STATE_MENU) {
+    updatePosition()
+    simulateWater()
+
+    if (keyIsPressed === true) {
+      gamestate = STATE_RUNNING
+    }
+  } else if (gamestate == STATE_RUNNING) {
+    updateForce()
+    updatePosition()
+    updateVelocity()
+    simulateWater()
+
+    if (person_pos.y > height) {
+      gamestate = STATE_END
+    }
+  } else if (gamestate == STATE_END) {
+    updatePosition()
+    updateVelocity()
+  }
 
   // Draw the things
   drawBackground()
@@ -317,9 +357,21 @@ function draw() {
   textSize(12);
   text(frameRate(), 10, 30);
 
-  textSize(32);
-  textAlign(CENTER);
-  text("Distance: " + int(swim_distance / PIX_PER_M) + "m", width/2, 60)
+  if (gamestate == STATE_MENU) {
+    textSize(48);
+    textAlign(CENTER);
+    text("ASKL", width/2, 60);
+    textSize(32);
+    text("A/S: Legs\nK: Upper arms\nL: Lower arms\n Press any key to begin!", width/2, 120);
+  } else if (gamestate == STATE_RUNNING) {
+    textSize(32);
+    textAlign(CENTER);
+    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", width/2, 60)
+  } else if (gamestate == STATE_END){
+    textSize(48);
+    textAlign(CENTER);
+    text("Game over!\nPress R to restart", width/2, 90);
+  }
 }
 
 function windowResized() {

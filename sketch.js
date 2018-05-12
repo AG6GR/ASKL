@@ -2,6 +2,8 @@ var cnv;
 
 var w = 750;
 var h = 500;
+var PIX_PER_M = 250
+var WATER_LEVEL = h / 2;
 
 // Image assets
 var img_body, img_leg, img_lower_arm, img_upper_arm;
@@ -14,9 +16,14 @@ var LEG_VEL_ROTATION = 10
 var ARM_UPPER_VEL_ROTATION = 5
 var ARM_LOWER_VEL_ROTATION = 5
 
-// Position Vector
-var person_pos;
-var person_rot;
+// Person state variables
+var person_pos; // Position (Vector) pixels
+var person_rot; // Rotation (float) degrees
+var person_vel; // Velocity (Vector) pixels/frame
+var person_vel_rot; // Angular Velocity (float) deg/frame
+
+// World State
+var swim_distance;
 
 // Sprites
 var body, leg_left, leg_right;
@@ -78,6 +85,10 @@ function keyReleased() {
 // ========== CUSTOM FUNCTIONS ========== //
 // Update all the sprite positions based on the person's location
 function updatePosition() {
+  person_pos.y += person_vel.y
+  swim_distance += person_vel.x
+  person_rot += person_vel_rot;
+
   body.position.set(person_pos);
   body.rotation = person_rot;
 
@@ -124,7 +135,23 @@ function updateVelocity() {
     arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
   }
   arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
+}
 
+// Simulate movement through water and change velocities accordingly
+function updateForce() {
+  // If legs are moving, propel forward
+  if (leg_left.vel_rotation != 0) {
+    person_vel.add(createVector(10, 0).rotate(person_rot))
+  }
+
+  person_vel_rot += 0.8 * arm_left_upper.vel_rotation
+
+  // Drag force
+  person_vel.mult(0.7)
+  person_vel_rot *= 0.7
+}
+
+function simulateWater() {
   // check colliders for body parts
   water.bounce(bodyParts);
 
@@ -159,15 +186,15 @@ function drawBackground() {
   // Water
   fill(color(0, 100, 230));
   noStroke();
-  rect(0, h / 2, w, h / 2);
+  rect(0, WATER_LEVEL, w, WATER_LEVEL);
 }
 
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
   // Preload all image assets
   img_body = loadImage("images/body.png");
-  img_leg = loadImage("images/leg2.png");
-  img_lower_arm = loadImage("images/lower_arm2.png");
+  img_leg = loadImage("images/leg.png");
+  img_lower_arm = loadImage("images/lower_arm.png");
   img_upper_arm = loadImage("images/upper_arm.png");
 }
 
@@ -184,11 +211,14 @@ function setup() {
   frameRate(60)
 
   // Setup swimmer
-  person_pos = createVector(width/2, height/2);
+  person_pos = createVector(width/2 + 50, WATER_LEVEL);
   person_rot = 0.0;
+  person_vel = createVector(0, 0);
+  person_vel_rot = 0.0;
+  swim_distance = 0;
 
   // Define position offsets
-  LEG_CENTER = createVector(-128, 7, 0);
+  LEG_CENTER = createVector(-140, 0, 0);
   UPPER_ARM_CENTER = createVector(20, 0, 0);
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 
@@ -261,17 +291,23 @@ function setup() {
 }
 
 function draw() {
-  // Update positions
-  person_pos.x = mouseX;
-  person_pos.y = mouseY;
-
+  // Update game state
+  updateForce()
   updatePosition()
   updateVelocity()
+  simulateWater()
 
   // Draw the things
   drawBackground()
   drawSprites()
+
+  // UI elements
+  textSize(12);
   text(frameRate(), 10, 30);
+
+  textSize(32);
+  textAlign(CENTER);
+  text("Distance: " + int(swim_distance / PIX_PER_M) + "m", width/2, 60)
 }
 
 function windowResized() {

@@ -1,7 +1,7 @@
 var cnv;
 
-var w = 750;
-var h = 500;
+var w = 1000;
+var h = 600;
 var PIX_PER_M = 250
 var WATER_LEVEL = h / 2;
 
@@ -193,8 +193,8 @@ function drawBackground() {
 function preload() {
   // Preload all image assets
   img_body = loadImage("images/body.png");
-  img_leg = loadImage("images/leg.png");
-  img_lower_arm = loadImage("images/lower_arm.png");
+  img_leg = loadImage("images/leg2.png");
+  img_lower_arm = loadImage("images/lower_arm2.png");
   img_upper_arm = loadImage("images/upper_arm.png");
 }
 
@@ -218,7 +218,7 @@ function setup() {
   swim_distance = 0;
 
   // Define position offsets
-  LEG_CENTER = createVector(-140, 0, 0);
+  LEG_CENTER = createVector(-125, 8, 0);
   UPPER_ARM_CENTER = createVector(20, 0, 0);
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 

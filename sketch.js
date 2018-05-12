@@ -5,6 +5,10 @@ var h = 600;
 var PIX_PER_M = 250
 var WATER_LEVEL = h / 2;
 
+// background scene is 13,500 pixels wide and 600 pixels high
+var SCENE_H = 600;
+var SCENE_W = 13500;
+
 // Game state machine
 var gamestate = 0;
 STATE_MENU = 0
@@ -219,7 +223,8 @@ function drawBackground() {
   // Water
   fill(color(0, 100, 230));
   noStroke();
-  rect(0, WATER_LEVEL, w, WATER_LEVEL);
+  rect(0, WATER_LEVEL, SCENE_W, WATER_LEVEL);
+  image(img_full_background, SCENE_W - body.position.x,0);
 }
 
 function resetGame() {
@@ -237,6 +242,7 @@ function preload() {
   img_leg = loadImage("images/leg2.png");
   img_lower_arm = loadImage("images/lower_arm2.png");
   img_upper_arm = loadImage("images/upper_arm.png");
+  img_full_background = loadImage("images/Full_Background.png");
 }
 
 function centerCanvas() {
@@ -250,6 +256,7 @@ function setup() {
   cnv = createCanvas(w, h);
   centerCanvas();
   frameRate(60)
+
 
   // Define position offsets
   LEG_CENTER = createVector(-125, 8, 0);
@@ -327,6 +334,9 @@ function setup() {
 }
 
 function draw() {
+  // setup camera
+  camera.on(); 
+
   // Update game state
   if (gamestate == STATE_MENU) {
     updatePosition()
@@ -352,6 +362,9 @@ function draw() {
   // Draw the things
   drawBackground()
   drawSprites()
+
+  // camera position
+  camera.position.x = body.position.x;
 
   // UI elements
   textSize(12);

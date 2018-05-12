@@ -141,11 +141,22 @@ function updateVelocity() {
 // Simulate movement through water and change velocities accordingly
 function updateForce() {
   // If legs are moving, propel forward
-  if (leg_left.vel_rotation != 0) {
+  if (leg_left.vel_rotation != 0 && leg_left.rel_rotation < 29 && leg_left.rel_rotation > -29) {
     person_vel.add(createVector(10, 0).rotate(radians(person_rot)))
   }
 
-  person_vel_rot += 0.8 * arm_left_upper.vel_rotation
+  // Arms rotate body
+  person_vel_rot -= 0.1 * arm_left_upper.vel_rotation
+
+  // Passively sink head first
+  person_vel_rot += 0.1
+  person_vel.y += 0.25
+
+  // If they're outside the water, fall faster
+  if (person_pos.y < WATER_LEVEL) {
+    person_vel.y += 5
+    person_vel.y += 1
+  }
 
   // Drag force
   person_vel.mult(0.7)

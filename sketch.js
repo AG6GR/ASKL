@@ -22,7 +22,8 @@ var person_rot;
 var body, leg_left, leg_right;
 var arm_left_upper, arm_left_lower;
 var arm_right_upper, arm_right_lower;
-var water;
+var bodyParts // list of all body parts
+var water; // list of all water molecules
 
 // ========== CALLBACKS/EVENT HANLDERS ========== //
 
@@ -94,20 +95,13 @@ function updatePosition() {
 
   arm_right_upper.rotation = body.rotation + arm_right_upper.rel_rotation;
   arm_right_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+  /*if (arm_right_upper.rotation%360 <180) {
+    var temp = createSprite(arm_right_upper.position.x, arm_right_upper.position.y, arm_right_upper.width, arm_right_upper.height);
+    temp.rotation = arm_right_upper.rotation;
+  }*/
 
   arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
   arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
-
-  for (var i = 0; i < width; i++) {
-    var y = water[i].position.y
-    var x = water[i].position.x
-    if (y <= height/2 || y >= height) {
-      water[i].setVelocity(water[i].velocity.x, -water[i].velocity.y);
-    }
-    if (x <= 0 || x >= width) {
-      water[i].setVelocity(-water[i].velocity.x, water[i].velocity.y);
-    }
-  }
 }
 
 // Move body part positions based on current velocities
@@ -119,23 +113,41 @@ function updateVelocity() {
   arm_right_upper.rel_rotation += arm_right_upper.vel_rotation;
   
   // Swap direction once lower arm reaches 90 or 270 degrees
-  if (arm_left_lower.rel_rotation <= 90 || arm_left_lower.rel_rotation >= 270) {
+  if (arm_left_lower.rel_rotation < 90 || arm_left_lower.rel_rotation > 270) {
     arm_left_lower.clockwise = !arm_left_lower.clockwise;
     arm_left_lower.vel_rotation = -arm_left_lower.vel_rotation;
   }
   arm_left_lower.rel_rotation += arm_left_lower.vel_rotation
 
-  if (arm_right_lower.rel_rotation <= 90 || arm_right_lower.rel_rotation >= 270) {
+  if (arm_right_lower.rel_rotation < 90 || arm_right_lower.rel_rotation > 270) {
     arm_right_lower.clockwise = !arm_right_lower.clockwise;
     arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
   }
   arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
+
+  // check colliders for body parts
+  water.bounce(bodyParts);
+
+  // water molecules bounce off of the boundaries of the display box
+  for (var i = 0; i < width/2; i++) {
+    var y = water[i].position.y
+    var x = water[i].position.x
+    if (y <= height/2 || y >= height) {
+      water[i].setVelocity(water[i].velocity.x, -water[i].velocity.y);
+    }
+    if (x <= 0 || x >= width) {
+      water[i].setVelocity(-water[i].velocity.x, water[i].velocity.y);
+    }
+  }
 }
 
+// initializes all water molecules with random velocity
 function createWater() {
-  for (var i = 0; i < width; i++) {
-    var waterMolecule = createSprite(random(0,width),random(height/2,height), 2, 2);
+  for (var i = 0; i < width/2; i++) {
+    var waterMolecule = createSprite(random(0,width),random(height/2,height), 3, 3);
     waterMolecule.setSpeed(random(1,2), random(0, 360));
+    waterMolecule.setCollider("circle", 0,0,3);
+    waterMolecule.depth = random(-1.2,1.2);
     water.add(waterMolecule);
   }
 }
@@ -181,37 +193,55 @@ function setup() {
   LOWER_ARM_CENTER = createVector(0, 80, 0);
 
   // Create body part Sprite objects
+  bodyParts = new Group();
+
   arm_left_upper = createSprite(person_pos.x + 20, person_pos.y - 25, 25, 100)
   arm_left_upper.addImage(img_upper_arm);
   arm_left_upper.rel_rotation = 0.0
   arm_left_upper.depth = -1
+  arm_left_upper.setCollider("rectangle", 0, 30, 25, 100); // offsets determined empirically
+  bodyParts.add(arm_left_upper);
+
   arm_left_lower = createSprite(person_pos.x - 20, person_pos.y - 25, 20, 100)
   arm_left_lower.addImage(img_lower_arm);
   arm_left_lower.rel_rotation = 180
-  arm_left_lower.depth = 1.1
+  arm_left_lower.depth = 1.1 
+  arm_left_lower.setCollider("rectangle", 0, 35, 20, 120); // offsets determined empirically
+  bodyParts.add(arm_left_lower);
 
   leg_left = createSprite(person_pos.x - 200, person_pos.y + 25, 240, 40)
   leg_left.addImage(img_leg);
   leg_left.rel_rotation = 45.0;
   leg_left.depth = -1
+  leg_left.setCollider("rectangle", -50, 0, 240, 40);
+  bodyParts.add(leg_left);
 
   body = createSprite(person_pos.x, person_pos.y, 200, 60)
   body.addImage(img_body);
-  body.depth = 0
+  body.depth = 0;
+  body.setCollider("rectangle", 0,0,250,60);
+  bodyParts.add(body);
 
   leg_right = createSprite(person_pos.x - 200, person_pos.y - 25, 240, 40)
   leg_right.addImage(img_leg);
   leg_right.rel_rotation = -30.0;
   leg_right.depth = 1
+  leg_right.setCollider("rectangle", -50, 0, 240, 40);
+  bodyParts.add(leg_right);
 
   arm_right_upper = createSprite(person_pos.x - 200, person_pos.y - 25, 25, 100)
   arm_right_upper.addImage(img_upper_arm);
   arm_right_upper.rel_rotation = 180.0
   arm_right_upper.depth = 1
+  arm_right_upper.setCollider("rectangle", 0, -30, 25, 100); // offsets determined empirically
+  bodyParts.add(arm_right_upper);
+
   arm_right_lower = createSprite(person_pos.x - 200, person_pos.y - 25, 20, 100)
   arm_right_lower.addImage(img_lower_arm);
   arm_right_lower.rel_rotation = 180
   arm_right_lower.depth = -1.1
+  arm_right_lower.setCollider("rectangle", 0, -35, 20, 120) // offsets determined empirically
+  bodyParts.add(arm_right_lower);
 
   // Angular velocities
   leg_left.vel_rotation = 0;
@@ -225,8 +255,9 @@ function setup() {
   arm_right_lower.vel_rotation = 0;
   arm_right_lower.clockwise = true
 
+  // generates water molecules
   water = new Group();
-  createWater()
+  createWater();
 }
 
 function draw() {

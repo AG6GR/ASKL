@@ -85,7 +85,8 @@ function keyReleased() {
 // ========== CUSTOM FUNCTIONS ========== //
 // Update all the sprite positions based on the person's location
 function updatePosition() {
-  person_pos.y += person_vel.y
+  //person_pos.y += person_vel.y
+  person_pos.add(person_vel)
   swim_distance += person_vel.x
   person_rot += person_vel_rot;
 
@@ -141,7 +142,7 @@ function updateVelocity() {
 function updateForce() {
   // If legs are moving, propel forward
   if (leg_left.vel_rotation != 0) {
-    person_vel.add(createVector(10, 0).rotate(person_rot))
+    person_vel.add(createVector(10, 0).rotate(radians(person_rot)))
   }
 
   person_vel_rot += 0.8 * arm_left_upper.vel_rotation

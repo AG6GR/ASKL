@@ -14,6 +14,7 @@ var gamestate = 0;
 STATE_MENU = 0
 STATE_RUNNING = 1
 STATE_END = 2
+STATE_WIN = 3
 
 // Image assets
 var img_body, img_leg, img_lower_arm, img_upper_arm;
@@ -31,6 +32,7 @@ var person_pos; // Position (Vector) pixels
 var person_rot; // Rotation (float) degrees
 var person_vel; // Velocity (Vector) pixels/frame
 var person_vel_rot; // Angular Velocity (float) deg/frame
+var is_swim_right; // Track if flip turn has happened
 
 // World State
 var swim_distance;
@@ -46,7 +48,7 @@ var water; // list of all water molecules
 
 // Keyboard event handling
 function keyPressed() {
-  if (gamestate == STATE_END) {
+  if (gamestate != STATE_RUNNING) {
     return;
   }
   if (keyCode == 65) {
@@ -113,6 +115,19 @@ function updatePosition() {
   person_pos.y += person_vel.y
   person_pos.add(person_vel)
   swim_distance += person_vel.x
+
+  if (is_swim_right) {
+    if (swim_distance < 5 * PIX_PER_M) {
+      swim_distance += person_vel.x
+    }
+    else {
+      is_swim_right = false
+    }
+  }
+  else if (!is_swim_right && swim_distance < 10 * PIX_PER_M) {
+    swim_distance -= Math.min(person_vel.x, 0)
+  }
+
   person_rot += person_vel_rot;
 
   body.position.set(person_pos);
@@ -245,6 +260,7 @@ function resetGame() {
   person_vel = createVector(0, 0);
   person_vel_rot = 0.0;
   swim_distance = 0;
+  is_swim_right = true;
 }
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
@@ -364,8 +380,13 @@ function draw() {
 
     if (person_pos.y > height) {
       gamestate = STATE_END
+    } else if (swim_distance >= 10 * PIX_PER_M) {
+      gamestate = STATE_WIN
     }
   } else if (gamestate == STATE_END) {
+    updatePosition()
+    updateVelocity()
+  } else if (gamestate == STATE_WIN) {
     updatePosition()
     updateVelocity()
   }
@@ -390,11 +411,18 @@ function draw() {
   } else if (gamestate == STATE_RUNNING) {
     textSize(32);
     textAlign(CENTER);
-    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", swim_distance, 60)
+    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", width/2, 60)
+    if (!is_swim_right) {
+      text("Half way! Do a flip turn!", width/2, 100)
+    }
   } else if (gamestate == STATE_END){
     textSize(48);
     textAlign(CENTER);
-    text("Game over!\nPress R to restart", swim_distance, 90);
+    text("Game over!\nPress R to restart", width/2, 90);
+  } else if (gamestate == STATE_WIN){
+    textSize(48);
+    textAlign(CENTER);
+    text("You win!\nPress R to restart", width/2, 90);
   }
 }
 

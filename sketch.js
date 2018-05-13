@@ -48,6 +48,7 @@ var arm_left_upper, arm_left_lower;
 var arm_right_upper, arm_right_lower;
 var bodyParts // list of all body parts
 var water; // list of all water molecules
+var buoys; // list of all the buoys
 
 // ========== CALLBACKS/EVENT HANLDERS ========== //
 
@@ -161,13 +162,25 @@ function updatePosition() {
   arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
 
   for (var i = 0; i < water.length; i++) {
-    if (water[i].position.x < swim_distance - w/2) {
-      water[i].remove();
-      var waterMolecule = createSprite(random(swim_distance + w/2, swim_distance + w),random(height/2,height), 3, 3);
-       waterMolecule.setSpeed(random(1,2), random(0, 360));
-      waterMolecule.setCollider("circle", 0,0,3);
-      waterMolecule.depth = random(-1.2,1.2);
-      water[i] = waterMolecule;
+    if (is_swim_right) {
+      if (water[i].position.x < swim_distance - w/2) {
+        water[i].remove();
+        var waterMolecule = createSprite(random(swim_distance + w/2, swim_distance + w),random(height/2,height), 3, 3);
+         waterMolecule.setSpeed(random(1,2), random(0, 360));
+        waterMolecule.setCollider("circle", 0,0,3);
+        waterMolecule.depth = random(-1.2,1.2);
+        water[i] = waterMolecule;
+      }
+    }
+    else {
+      if (water[i].position.x > POOL_LENGTH - (swim_distance - POOL_LENGTH) + w/2) {
+        water[i].remove();
+        var waterMolecule = createSprite(random(POOL_LENGTH - (swim_distance - POOL_LENGTH) - w, POOL_LENGTH - (swim_distance - POOL_LENGTH) - w/2),random(height/2,height), 3, 3);
+        waterMolecule.setSpeed(random(1,2), random(0, 360));
+        waterMolecule.setCollider("circle", 0,0,3);
+        waterMolecule.depth = random(-1.2,1.2);
+        water[i] = waterMolecule;
+      }
     } 
   }
 }
@@ -221,14 +234,15 @@ function updateForce() {
 
 function simulateWater() {
   // check colliders for body parts
-  water.bounce(bodyParts);
+  water.collide(buoys, handleBuoys);
+  bodyParts.displace(water);
 
   // water molecules bounce off of the boundaries of the display box
   for (var i = 0; i < water.length; i++) {
     var y = water[i].position.y
     var x = water[i].position.x
     if (y <= height/2 || y >= height) {
-      water[i].setVelocity(water[i].velocity.x, -water[i].velocity.y);
+      water[i].setVelocity(water[i].velocity.x, -1*water[i].velocity.y);
     }
     if (x <= 0 || x >= width) {
       water[i].setVelocity(-water[i].velocity.x, water[i].velocity.y);
@@ -236,15 +250,70 @@ function simulateWater() {
   }
 }
 
+function simulateBuoys() {
+  var eps = 15;
+  for (var i = 0; i < buoys.length; i++) {
+    var y = buoys[i].position.y
+    var x = buoys[i].position.x
+    if (y <= height/2 - eps) {
+      buoys[i].setVelocity(buoys[i].velocity.x, 3);
+    }
+    if (y >= height/2 + eps) {
+      buoys[i].setVelocity(buoys[i].velocity.x, -3);
+    } 
+  }
+
+  var weights = [1/19, 4/19, 9/19, 4/19, 1/19];
+  var velCopy = [];
+  for (var i = 0; i < buoys.length; i++) {
+    velCopy.push(buoys[i].velocity.y);
+  }
+
+  for (var i = 2; i < buoys.length - 2; i++) {
+    var vel = [ velCopy[i - 2],
+                velCopy[i - 1],
+                velCopy[i],
+                velCopy[i + 1],
+                velCopy[i + 2]];
+    var weightedVel = 0;
+    for (var j = 0; j < 5; j++) {
+      weightedVel += vel[j]*weights[j];
+    }
+    buoys[i].setVelocity(buoys[i].velocity.x, weightedVel);
+  }
+
+
+}
+
 // initializes all water molecules with random velocity
 function createWater() {
-  for (var i = 0; i < width/2; i++) {
+  for (var i = 0; i < width/10; i++) {
     var waterMolecule = createSprite(random(swim_distance-w/2, swim_distance + w/2),random(height/2,height), 3, 3);
     waterMolecule.setSpeed(random(1,2), random(0, 360));
     waterMolecule.setCollider("circle", 0,0,3);
     waterMolecule.depth = random(-1.2,1.2);
     water.add(waterMolecule);
   }
+}
+
+// initializes all buoys in their proper locations
+function createBuoys() {
+  for (var i = 0; i < 40; i++) {
+    var singleBuoy = createSprite(w / 40 * i - w/2, h/2, 12, 30);
+    singleBuoy.setCollider("rectangle", 0, 0, 12, 30);
+    singleBuoy.depth = random(2);
+    buoys.add(singleBuoy);
+  }
+}
+
+// makes collisions affect buoys less 
+function handleBuoys(spriteWater, spriteBuoy) {
+  newVelX1 = (spriteWater.velocity.x + (2 * spriteBuoy.mass * spriteBuoy.velocity.x)) / (spriteWater.mass + spriteBuoy.mass);
+  newVelY1 = (spriteWater.velocity.y + (2 * spriteBuoy.mass * spriteBuoy.velocity.y)) / (spriteWater.mass + spriteBuoy.mass);
+  newVelX2 = (spriteBuoy.velocity.x * (spriteBuoy.mass - spriteWater.mass) + (2 * spriteWater.mass * spriteWater.velocity.x)) / (spriteWater.mass + spriteBuoy.mass);
+  newVelY2 = (spriteBuoy.velocity.y * (spriteBuoy.mass - spriteWater.mass) + (2 * spriteWater.mass * spriteWater.velocity.y)) / (spriteWater.mass + spriteBuoy.mass);
+  spriteWater.setVelocity(-1*newVelX1, -1*newVelY1);
+  spriteBuoy.setVelocity(0, newVelY2*2);
 }
 
 // Draw background
@@ -377,6 +446,10 @@ function setup() {
   // generates water molecules
   water = new Group();
   createWater();
+
+  // generate buoys
+  buoys = new Group();
+  createBuoys();
 }
 
 function draw() {
@@ -385,6 +458,7 @@ function draw() {
   if (gamestate == STATE_MENU) {
     updatePosition()
     simulateWater()
+    simulateBuoys()
 
     if (keyIsPressed === true) {
       gamestate = STATE_RUNNING
@@ -396,6 +470,7 @@ function draw() {
     updatePosition()
     updateVelocity()
     simulateWater()
+    simulateBuoys()
 
     if (person_pos.y > height) {
       gamestate = STATE_END
@@ -405,6 +480,8 @@ function draw() {
   } else if (gamestate == STATE_END) {
     updatePosition()
     updateVelocity()
+    simulateWater()
+    simulateBuoys()
   } else if (gamestate == STATE_WIN) {
     person_vel.set(0,0);
     person_vel_rot = 0;
@@ -442,7 +519,7 @@ function draw() {
   } else if (gamestate == STATE_WIN){
     textSize(48);
     textAlign(CENTER);
-    text("You win!\nTime: " + (elapsed_frames * elapsed_frames/avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
+    text("You win!\nTime: " + (elapsed_frames/avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
   }
 }
 

@@ -12,6 +12,7 @@ var SCENE_W = 13500;
 
 // Game state machine
 var gamestate = 0;
+var cheatstate = 0;
 STATE_MENU = 0
 STATE_RUNNING = 1
 STATE_END = 2
@@ -104,7 +105,7 @@ function keyReleased() {
 }
 
 function keyTyped() {
-  if (keyCode == 114) {
+  if (keyCode == 114 || keyCode == 82) {
     console.log("Resetting!")
     gamestate = STATE_RUNNING;
     resetGame()
@@ -123,7 +124,8 @@ function updatePosition() {
   if (is_swim_right) {
     swim_distance = person_pos.x
     if (swim_distance < POOL_LENGTH) {
-      person_pos.x += person_vel.x
+      if (person_vel.x > 0 || person_pos.x > -1.0 * PIX_PER_M)
+        person_pos.x += person_vel.x
     }
     else {
       is_swim_right = false
@@ -215,7 +217,7 @@ function updateForce() {
   }
 
   // Arms rotate body
-  person_vel_rot -= 0.1 * arm_left_upper.vel_rotation
+  person_vel_rot -= 0.2 * (arm_left_upper.vel_rotation - 0.05 * abs(180 - arm_left_lower.rel_rotation))
 
   // Passively sink head first
   person_vel_rot += 0.1
@@ -298,10 +300,10 @@ function createWater() {
 
 // initializes all buoys in their proper locations
 function createBuoys() {
-  for (var i = 0; i < 40; i++) {
-    var singleBuoy = createSprite(w / 40 * i - w/2, h/2, 12, 30);
+  for (var i = 0; i < 100; i++) {
+    var singleBuoy = createSprite(w / 39 * i - w/2 + 133, h/2 - 15, 12, 30);
     singleBuoy.setCollider("rectangle", 0, 0, 12, 30);
-    singleBuoy.depth = random(2);
+    singleBuoy.depth = random(1);
     buoys.add(singleBuoy);
   }
 }
@@ -324,7 +326,13 @@ function drawBackground() {
   fill(color(0, 100, 230));
   noStroke();
   rect(0, WATER_LEVEL, SCENE_W, WATER_LEVEL);
-  image(img_full_background, -w/2,0);
+  image(img_full_background, -w/2, 0);
+}
+
+function drawForeground() {
+
+  image(img_water, -w/2, 0);
+
 }
 
 function resetGame() {
@@ -333,6 +341,12 @@ function resetGame() {
   person_rot = 0.0;
   person_vel = createVector(0, 0);
   person_vel_rot = 0.0;
+  /* Need to reset arms
+  arm_left_upper.rel_rotation = 0.0;
+  arm_left_lower.rel_rotation = 180.0;
+  arm_right_upper.rel_rotation = 180.0;
+  arm_right_lower.rel_rotation = 180.0;
+  */
   swim_distance = 0;
   is_swim_right = true;
 
@@ -344,7 +358,8 @@ function win() {
   gamestate = STATE_WIN
 }
 function cheat() {
-  KICK_FORCE = 100
+  cheatstate = 1;
+  KICK_FORCE = 100;
 }
 
 // ========== P5 STANDARD FUNCTIONS ========== //
@@ -355,6 +370,7 @@ function preload() {
   img_lower_arm = loadImage("images/lower_arm2.png");
   img_upper_arm = loadImage("images/upper_arm.png");
   img_full_background = loadImage("images/Full_Background.png");
+  img_water = loadImage("images/Water.png");
 }
 
 function centerCanvas() {
@@ -450,6 +466,8 @@ function setup() {
   // generate buoys
   buoys = new Group();
   createBuoys();
+
+  //cheat();
 }
 
 function draw() {
@@ -472,7 +490,7 @@ function draw() {
     simulateWater()
     simulateBuoys()
 
-    if (person_pos.y > height) {
+    if (person_pos.y > height && cheatstate == 0) {
       gamestate = STATE_END
     } else if (swim_distance >= 2 * POOL_LENGTH) {
       gamestate = STATE_WIN
@@ -489,8 +507,9 @@ function draw() {
   }
 
   // Draw the things
-  drawBackground()
-  drawSprites()
+  drawBackground();
+  drawSprites();
+  drawForeground();
 
   // camera position
   camera.position.x = person_pos.x;
@@ -509,7 +528,7 @@ function draw() {
     textSize(32);
     textAlign(CENTER);
     text("Distance: " + (swim_distance / PIX_PER_M).toFixed(1) + "m", camera.position.x, 60)
-    if (!is_swim_right && swim_distance < 55 * PIX_PER_M) {
+    if (!is_swim_right && swim_distance < 56 * PIX_PER_M) {
       text("Half way! Do a flip turn!", camera.position.x, 100)
     }
   } else if (gamestate == STATE_END){

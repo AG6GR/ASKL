@@ -111,7 +111,7 @@ function keyTyped() {
 // Update all the sprite positions based on the person's location
 function updatePosition() {
   person_pos.y += person_vel.y
-  //person_pos.add(person_vel)
+  person_pos.add(person_vel)
   swim_distance += person_vel.x
   person_rot += person_vel_rot;
 
@@ -139,6 +139,17 @@ function updatePosition() {
 
   arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
   arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+
+  for (var i = 0; i < water.length; i++) {
+    if (water[i].position.x < swim_distance - w/2) {
+      water[i].remove();
+      var waterMolecule = createSprite(random(swim_distance + w/2, swim_distance + w),random(height/2,height), 3, 3);
+       waterMolecule.setSpeed(random(1,2), random(0, 360));
+      waterMolecule.setCollider("circle", 0,0,3);
+      waterMolecule.depth = random(-1.2,1.2);
+      water[i] = waterMolecule;
+    } 
+  }
 }
 
 // Move body part positions based on current velocities
@@ -193,7 +204,7 @@ function simulateWater() {
   water.bounce(bodyParts);
 
   // water molecules bounce off of the boundaries of the display box
-  for (var i = 0; i < width/2; i++) {
+  for (var i = 0; i < water.length; i++) {
     var y = water[i].position.y
     var x = water[i].position.x
     if (y <= height/2 || y >= height) {
@@ -208,7 +219,7 @@ function simulateWater() {
 // initializes all water molecules with random velocity
 function createWater() {
   for (var i = 0; i < width/2; i++) {
-    var waterMolecule = createSprite(random(0,width),random(height/2,height), 3, 3);
+    var waterMolecule = createSprite(random(swim_distance-w/2, swim_distance + w/2),random(height/2,height), 3, 3);
     waterMolecule.setSpeed(random(1,2), random(0, 360));
     waterMolecule.setCollider("circle", 0,0,3);
     waterMolecule.depth = random(-1.2,1.2);
@@ -224,12 +235,12 @@ function drawBackground() {
   fill(color(0, 100, 230));
   noStroke();
   rect(0, WATER_LEVEL, SCENE_W, WATER_LEVEL);
-  image(img_full_background, SCENE_W - body.position.x,0);
+  image(img_full_background, -w/2,0);
 }
 
 function resetGame() {
   // Setup swimmer
-  person_pos = createVector(width/2 + 50, WATER_LEVEL);
+  person_pos = createVector(0, WATER_LEVEL);
   person_rot = 0.0;
   person_vel = createVector(0, 0);
   person_vel_rot = 0.0;
@@ -364,7 +375,7 @@ function draw() {
   drawSprites()
 
   // camera position
-  camera.position.x = body.position.x;
+  camera.position.x = swim_distance;
 
   // UI elements
   textSize(12);
@@ -373,17 +384,17 @@ function draw() {
   if (gamestate == STATE_MENU) {
     textSize(48);
     textAlign(CENTER);
-    text("ASKL", width/2, 60);
+    text("ASKL", swim_distance, 60);
     textSize(32);
-    text("A/S: Legs\nK: Upper arms\nL: Lower arms\n Press any key to begin!", width/2, 120);
+    text("A/S: Legs\nK: Upper arms\nL: Lower arms\n Press any key to begin!", swim_distance, 120);
   } else if (gamestate == STATE_RUNNING) {
     textSize(32);
     textAlign(CENTER);
-    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", width/2, 60)
+    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", swim_distance, 60)
   } else if (gamestate == STATE_END){
     textSize(48);
     textAlign(CENTER);
-    text("Game over!\nPress R to restart", width/2, 90);
+    text("Game over!\nPress R to restart", swim_distance, 90);
   }
 }
 

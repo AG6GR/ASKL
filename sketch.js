@@ -3,6 +3,7 @@ var cnv;
 var w = 1000;
 var h = 600;
 var PIX_PER_M = 250
+var POOL_LENGTH = 50 * PIX_PER_M // Pool length in pixels
 var WATER_LEVEL = h / 2;
 
 // background scene is 13,500 pixels wide and 600 pixels high
@@ -36,6 +37,8 @@ var is_swim_right; // Track if flip turn has happened
 
 // World State
 var swim_distance;
+var elapsed_frames;
+var avg_fps;
 
 // Sprites
 var body, leg_left, leg_right;
@@ -113,19 +116,19 @@ function keyTyped() {
 // Update all the sprite positions based on the person's location
 function updatePosition() {
   person_pos.y += person_vel.y
-  person_pos.add(person_vel)
-  swim_distance += person_vel.x
 
   if (is_swim_right) {
-    if (swim_distance < 5 * PIX_PER_M) {
-      swim_distance += person_vel.x
+    swim_distance = person_pos.x
+    if (swim_distance < POOL_LENGTH) {
+      person_pos.x += person_vel.x
     }
     else {
       is_swim_right = false
     }
   }
-  else if (!is_swim_right && swim_distance < 10 * PIX_PER_M) {
-    swim_distance -= Math.min(person_vel.x, 0)
+  else if (!is_swim_right && swim_distance < POOL_LENGTH * 2) {
+    swim_distance = POOL_LENGTH * 2 - person_pos.x
+    person_pos.x += Math.min(person_vel.x, 0)
   }
 
   person_rot += person_vel_rot;
@@ -261,7 +264,15 @@ function resetGame() {
   person_vel_rot = 0.0;
   swim_distance = 0;
   is_swim_right = true;
+
+  elapsed_frames = 0;
+  avg_fps = 0;
 }
+
+function win() {
+  gamestate = STATE_WIN
+}
+
 // ========== P5 STANDARD FUNCTIONS ========== //
 function preload() {
   // Preload all image assets
@@ -279,11 +290,14 @@ function centerCanvas() {
 }
 
 function setup() {
+
   // Setup Canvas
   cnv = createCanvas(w, h);
   centerCanvas();
   frameRate(60)
 
+  // setup camera
+  camera.on(); 
 
   // Define position offsets
   LEG_CENTER = createVector(-125, 8, 0);
@@ -361,8 +375,6 @@ function setup() {
 }
 
 function draw() {
-  // setup camera
-  camera.on(); 
 
   // Update game state
   if (gamestate == STATE_MENU) {
@@ -373,6 +385,8 @@ function draw() {
       gamestate = STATE_RUNNING
     }
   } else if (gamestate == STATE_RUNNING) {
+    elapsed_frames++;
+    avg_fps += frameRate();
     updateForce()
     updatePosition()
     updateVelocity()
@@ -380,15 +394,16 @@ function draw() {
 
     if (person_pos.y > height) {
       gamestate = STATE_END
-    } else if (swim_distance >= 10 * PIX_PER_M) {
+    } else if (swim_distance >= 2 * POOL_LENGTH) {
       gamestate = STATE_WIN
     }
   } else if (gamestate == STATE_END) {
     updatePosition()
     updateVelocity()
   } else if (gamestate == STATE_WIN) {
-    updatePosition()
-    updateVelocity()
+    person_vel.set(0,0);
+    person_vel_rot = 0;
+    updatePosition();
   }
 
   // Draw the things
@@ -396,33 +411,33 @@ function draw() {
   drawSprites()
 
   // camera position
-  camera.position.x = swim_distance;
+  camera.position.x = person_pos.x;
 
   // UI elements
   textSize(12);
-  text(frameRate(), 10, 30);
+  text("FPS: " + frameRate().toPrecision(4), camera.position.x - width/2, 30);
 
   if (gamestate == STATE_MENU) {
     textSize(48);
     textAlign(CENTER);
-    text("ASKL", swim_distance, 60);
+    text("ASKL", person_pos.x, 60);
     textSize(32);
-    text("A/S: Legs\nK: Upper arms\nL: Lower arms\n Press any key to begin!", swim_distance, 120);
+    text("A/S: Legs\nK: Upper arms\nL: Lower arms\n Press any key to begin!", person_pos.x, 120);
   } else if (gamestate == STATE_RUNNING) {
     textSize(32);
     textAlign(CENTER);
-    text("Distance: " + (swim_distance / PIX_PER_M).toPrecision(2) + "m", width/2, 60)
+    text("Distance: " + (swim_distance / PIX_PER_M).toFixed(1) + "m", camera.position.x, 60)
     if (!is_swim_right) {
-      text("Half way! Do a flip turn!", width/2, 100)
+      text("Half way! Do a flip turn!", camera.position.x, 100)
     }
   } else if (gamestate == STATE_END){
     textSize(48);
     textAlign(CENTER);
-    text("Game over!\nPress R to restart", width/2, 90);
+    text("Game over!\nPress R to restart", camera.position.x, 90);
   } else if (gamestate == STATE_WIN){
     textSize(48);
     textAlign(CENTER);
-    text("You win!\nPress R to restart", width/2, 90);
+    text("You win!\nTime: " + (elapsed_frames/avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
   }
 }
 

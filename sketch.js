@@ -28,6 +28,8 @@ var LEG_VEL_ROTATION = 10
 var ARM_UPPER_VEL_ROTATION = 5
 var ARM_LOWER_VEL_ROTATION = 5
 
+var KICK_FORCE = 10
+
 // Person state variables
 var person_pos; // Position (Vector) pixels
 var person_rot; // Rotation (float) degrees
@@ -196,7 +198,7 @@ function updateVelocity() {
 function updateForce() {
   // If legs are moving, propel forward
   if (leg_left.vel_rotation != 0 && leg_left.rel_rotation < 29 && leg_left.rel_rotation > -29) {
-    person_vel.add(createVector(10, 0).rotate(radians(person_rot)))
+    person_vel.add(createVector(KICK_FORCE, 0).rotate(radians(person_rot)))
   }
 
   // Arms rotate body
@@ -271,6 +273,9 @@ function resetGame() {
 
 function win() {
   gamestate = STATE_WIN
+}
+function cheat() {
+  KICK_FORCE = 100
 }
 
 // ========== P5 STANDARD FUNCTIONS ========== //
@@ -427,7 +432,7 @@ function draw() {
     textSize(32);
     textAlign(CENTER);
     text("Distance: " + (swim_distance / PIX_PER_M).toFixed(1) + "m", camera.position.x, 60)
-    if (!is_swim_right) {
+    if (!is_swim_right && swim_distance < 55 * PIX_PER_M) {
       text("Half way! Do a flip turn!", camera.position.x, 100)
     }
   } else if (gamestate == STATE_END){

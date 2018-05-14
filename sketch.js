@@ -30,6 +30,7 @@ var ARM_UPPER_VEL_ROTATION = 5
 var ARM_LOWER_VEL_ROTATION = 5
 
 var KICK_FORCE = 10
+var DROWNING_TIME = 5.0
 
 // Person state variables
 var person_pos; // Position (Vector) pixels
@@ -42,6 +43,7 @@ var is_swim_right; // Track if flip turn has happened
 var swim_distance;
 var elapsed_frames;
 var avg_fps;
+var drown_time;
 
 // Sprites
 var body, leg_left, leg_right;
@@ -123,7 +125,7 @@ function updatePosition() {
 
   if (is_swim_right) {
     swim_distance = person_pos.x
-    if (swim_distance < POOL_LENGTH) {
+    if (swim_distance < POOL_LENGTH + 0.25 * PIX_PER_M) {
       if (person_vel.x > 0 || person_pos.x > -1.0 * PIX_PER_M)
         person_pos.x += person_vel.x
     }
@@ -131,7 +133,7 @@ function updatePosition() {
       is_swim_right = false
     }
   }
-  else if (!is_swim_right && swim_distance < POOL_LENGTH * 2) {
+  else if (!is_swim_right && swim_distance < POOL_LENGTH * 2 + 150) {
     swim_distance = POOL_LENGTH * 2 - person_pos.x
     person_pos.x += Math.min(person_vel.x, 0)
   }
@@ -147,21 +149,36 @@ function updatePosition() {
   leg_right.rotation = body.rotation + leg_right.rel_rotation;
   leg_right.position.set(LEG_CENTER).rotate(radians(body.rotation)).add(body.position);
 
-  arm_left_upper.rotation = body.rotation + arm_left_upper.rel_rotation;
-  arm_left_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+  if (is_swim_right) {
+    arm_left_upper.rotation = body.rotation + arm_left_upper.rel_rotation;
+    arm_left_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
 
-  arm_left_lower.rotation = body.rotation + arm_left_upper.rel_rotation + arm_left_lower.rel_rotation;
-  arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_left_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+    arm_right_upper.rotation = body.rotation + arm_right_upper.rel_rotation;
+    arm_right_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+    /*if (arm_right_upper.rotation%360 <180) {
+      var temp = createSprite(arm_right_upper.position.x, arm_right_upper.position.y, arm_right_upper.width, arm_right_upper.height);
+      temp.rotation = arm_right_upper.rotation;
+    }*/
 
-  arm_right_upper.rotation = body.rotation + arm_right_upper.rel_rotation;
-  arm_right_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
-  /*if (arm_right_upper.rotation%360 <180) {
-    var temp = createSprite(arm_right_upper.position.x, arm_right_upper.position.y, arm_right_upper.width, arm_right_upper.height);
-    temp.rotation = arm_right_upper.rotation;
-  }*/
+    arm_left_lower.rotation = body.rotation + arm_left_upper.rel_rotation + arm_left_lower.rel_rotation;
+    arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_left_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
 
-  arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
-  arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+    arm_right_lower.rotation = body.rotation + arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
+    arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+  }
+  else {
+    arm_left_upper.rotation = body.rotation - arm_left_upper.rel_rotation;
+    arm_left_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+
+    arm_right_upper.rotation = body.rotation - arm_right_upper.rel_rotation;
+    arm_right_upper.position.set(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+
+    arm_left_lower.rotation = body.rotation - arm_left_upper.rel_rotation + arm_left_lower.rel_rotation;
+    arm_left_lower.position.set(LOWER_ARM_CENTER).rotate(radians(-arm_left_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+
+    arm_right_lower.rotation = body.rotation - arm_right_upper.rel_rotation + arm_right_lower.rel_rotation;
+    arm_right_lower.position.set(LOWER_ARM_CENTER).rotate(radians(-arm_right_upper.rel_rotation)).add(UPPER_ARM_CENTER).rotate(radians(body.rotation)).add(body.position);
+  }
 
   for (var i = 0; i < water.length; i++) {
     if (is_swim_right) {
@@ -222,10 +239,14 @@ function updateForce() {
   // Passively sink head first
   person_vel_rot += 0.1
 
-  // If they're outside the water, fall faster
-  if (person_pos.y < WATER_LEVEL) {
-    person_vel.y += 5
-    person_vel.y += 1
+  // If they're outside the water, fall faster and move slower
+  if (person_pos.y < WATER_LEVEL + 10) {
+    person_vel.y += 5;
+    person_vel.y += 1;
+    person_vel.x *= 0.5;
+  }
+  else {
+    person_vel.x *= 1.2;;
   }
 
   // Drag force
@@ -325,7 +346,7 @@ function drawBackground() {
   // Water
   fill(color(0, 100, 230));
   noStroke();
-  rect(0, WATER_LEVEL, SCENE_W, WATER_LEVEL);
+  /*rect(0, WATER_LEVEL, SCENE_W, WATER_LEVEL);*/
   image(img_full_background, -w/2, 0);
 }
 
@@ -338,20 +359,16 @@ function drawForeground() {
 function resetGame() {
   // Setup swimmer
   person_pos = createVector(0, WATER_LEVEL);
+  head_pos = createVector(100, WATER_LEVEL);
   person_rot = 0.0;
   person_vel = createVector(0, 0);
   person_vel_rot = 0.0;
-  /* Need to reset arms
-  arm_left_upper.rel_rotation = 0.0;
-  arm_left_lower.rel_rotation = 180.0;
-  arm_right_upper.rel_rotation = 180.0;
-  arm_right_lower.rel_rotation = 180.0;
-  */
   swim_distance = 0;
   is_swim_right = true;
 
   elapsed_frames = 0;
   avg_fps = 0;
+  drown_time = DROWNING_TIME;
 }
 
 function win() {
@@ -489,13 +506,30 @@ function draw() {
     updateVelocity()
     simulateWater()
     simulateBuoys()
+    
+    if (person_pos.y > WATER_LEVEL + 50) {
+      drown_time -= 1 / frameRate();
+    }
+    else {
+      drown_time = DROWNING_TIME;
+    }
 
     if (person_pos.y > height && cheatstate == 0) {
       gamestate = STATE_END
-    } else if (swim_distance >= 2 * POOL_LENGTH) {
+    } else if (drown_time <= 0) {
+      person_vel.x = 0;
+      person_vel_rot = 0;
+      gamestate = STATE_END
+    } else if (swim_distance >= 2 * POOL_LENGTH + 150) {
       gamestate = STATE_WIN
     }
-  } else if (gamestate == STATE_END) {
+  } if (gamestate == STATE_END) {
+    person_vel.x = 0;
+    person_vel_rot = 0;
+    arm_left_upper.rel_rotation = 0.0;
+    arm_left_lower.rel_rotation = 180.0;
+    arm_right_upper.rel_rotation = 180.0;
+    arm_right_lower.rel_rotation = 180.0;
     updatePosition()
     updateVelocity()
     simulateWater()
@@ -528,8 +562,13 @@ function draw() {
     textSize(32);
     textAlign(CENTER);
     text("Distance: " + (swim_distance / PIX_PER_M).toFixed(1) + "m", camera.position.x, 60)
-    if (!is_swim_right && swim_distance < 56 * PIX_PER_M) {
-      text("Half way! Do a flip turn!", camera.position.x, 100)
+    if (!is_swim_right && swim_distance < 55 * PIX_PER_M) {
+      text("Half way! Do a flip turn!", camera.position.x, 140)
+    }
+    if (person_pos.y > WATER_LEVEL + 50) {
+      textSize(32);
+      textAlign(CENTER);
+      text("Time until drowning: " + (drown_time).toFixed(2), camera.position.x, 100);
     }
   } else if (gamestate == STATE_END){
     textSize(48);

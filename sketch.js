@@ -234,10 +234,15 @@ function updateForce() {
   }
 
   // Arms rotate body
-  person_vel_rot -= 0.2 * (arm_left_upper.vel_rotation - 0.05 * abs(180 - arm_left_lower.rel_rotation))
+  person_vel_rot -= 0.1 * (arm_left_upper.vel_rotation)
+  person_vel_rot += 0.1 * abs(arm_left_lower.vel_rotation)
 
   // Passively sink head first
-  person_vel_rot += 0.1
+  if (person_rot > -90) {
+    person_vel_rot += 0.1
+  } else if (person_rot < -90) {
+    person_vel_rot -= 0.1
+  }
 
   // If they're outside the water, fall faster and move slower
   if (person_pos.y < WATER_LEVEL + 10) {

@@ -577,7 +577,7 @@ function draw() {
   } else if (gamestate == STATE_WIN){
     textSize(48);
     textAlign(CENTER);
-    text("You win!\nTime: " + (elapsed_frames/avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
+    text("You win!\nTime: " + (elapsed_frames * elapsed_frames / avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
   }
 }
 

@@ -109,6 +109,10 @@ function keyReleased() {
 function keyTyped() {
   if (keyCode == 114 || keyCode == 82) {
     console.log("Resetting!")
+    arm_left_upper.rel_rotation = 0.0;
+    arm_left_lower.rel_rotation = 180.0;
+    arm_right_upper.rel_rotation = 180.0;
+    arm_right_lower.rel_rotation = 180.0;
     gamestate = STATE_RUNNING;
     resetGame()
     updateForce()
@@ -518,6 +522,7 @@ function draw() {
       gamestate = STATE_END
     } else if (drown_time <= 0) {
       person_vel.x = 0;
+      person_vel.y = abs(person_vel.y);
       person_vel_rot = 0;
       gamestate = STATE_END
     } else if (swim_distance >= 2 * POOL_LENGTH + 150) {
@@ -526,10 +531,6 @@ function draw() {
   } if (gamestate == STATE_END) {
     person_vel.x = 0;
     person_vel_rot = 0;
-    arm_left_upper.rel_rotation = 0.0;
-    arm_left_lower.rel_rotation = 180.0;
-    arm_right_upper.rel_rotation = 180.0;
-    arm_right_lower.rel_rotation = 180.0;
     updatePosition()
     updateVelocity()
     simulateWater()

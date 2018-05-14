@@ -518,6 +518,7 @@ function draw() {
       gamestate = STATE_END
     } else if (drown_time <= 0) {
       person_vel.x = 0;
+      person_vel.y = 2;
       person_vel_rot = 0;
       gamestate = STATE_END
     } else if (swim_distance >= 2 * POOL_LENGTH + 150) {
@@ -577,7 +578,7 @@ function draw() {
   } else if (gamestate == STATE_WIN){
     textSize(48);
     textAlign(CENTER);
-    text("You win!\nTime: " + (elapsed_frames * elapsed_frames / avg_fps).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
+    text("You win!\nTime: " + (elapsed_frames / 60).toFixed(2)  + " sec\nPress R to restart", camera.position.x, 90);
   }
 }
 

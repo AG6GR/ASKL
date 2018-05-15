@@ -116,7 +116,7 @@ function keyReleased() {
 
 function keyTyped() {
   if (keyCode == 114 || keyCode == 82) {
-    console.log("Resetting!")
+    ////console.log("Resetting!")
     arm_left_upper.rel_rotation = 0.0;
     arm_left_lower.rel_rotation = 180.0;
     arm_right_upper.rel_rotation = 180.0;
@@ -202,7 +202,7 @@ function updatePosition() {
         waterMolecule.depth = random(-1.2,1.2);
         waterMolecule.visible = false;
         water[i] = waterMolecule;
-        //console.log(water.length);
+        //////console.log(water.length);
       }
     }
     else {
@@ -293,7 +293,7 @@ function simulateWater() {
   }
 }
 
-var BUOY_SPACING = w / 39;
+var BUOY_SPACING = 26;
 
 function createBuoy(x_pos) {
   var new_buoy = createSprite(x_pos, h/2, 12, 30);
@@ -328,6 +328,7 @@ function simulateBuoys() {
 
   // Cull extra buoys on left
   while (left_buoy.position.x <= person_pos.x - width / 2 - BUOY_SPACING * 5) {
+    //console.log("cull left")
     var old_left = left_buoy;
     left_buoy = left_buoy.right;
     buoys.remove(old_left)
@@ -338,16 +339,18 @@ function simulateBuoys() {
 
   // Cull extra buoys on right
   while (right_buoy.position.x > person_pos.x + width / 2 + BUOY_SPACING * 5) {
+    //console.log("cull right")
     var old_right = right_buoy;
     right_buoy = right_buoy.left;
-    buoys.remove(right_buoy)
-    right_buoy.remove()
+    buoys.remove(old_right)
+    old_right.remove()
     if (buoys.length == 2)
       createBuoys()
   }
 
   // Add buoys on the left if needed
   while (left_buoy.position.x > person_pos.x - width / 2 - BUOY_SPACING * 2) {
+    //console.log("add left")
     var old_left = left_buoy;
     left_buoy = createBuoy(old_left.position.x - BUOY_SPACING)
     left_buoy.right = old_left
@@ -356,7 +359,9 @@ function simulateBuoys() {
 
   // Add buoys on the right if needed
   while (right_buoy.position.x <= person_pos.x + width / 2 + BUOY_SPACING * 2) {
+    //console.log("add right")
     var old_right = right_buoy;
+    //console.log(old_right.position.x + BUOY_SPACING)
     right_buoy = createBuoy(old_right.position.x + BUOY_SPACING)
     right_buoy.left = old_right
     old_right.right = right_buoy
@@ -428,14 +433,13 @@ function createWater() {
 
 // initializes all buoys in their proper locations
 function createBuoys() {
-  //console.log("createBuoys")
+  ////console.log("createBuoys")
   buoys.removeSprites();
-  left_buoy = createBuoy(person_pos.x);
-  right_buoy = createBuoy(person_pos.x + BUOY_SPACING);
+  left_buoy = createBuoy(Math.floor(person_pos.x));
+  right_buoy = createBuoy(Math.floor(person_pos.x) + BUOY_SPACING);
   right_buoy.left = left_buoy;
   left_buoy.right = right_buoy;
   farthest_buoy = right_buoy;
-  //console.log(left_buoy)
 }
 
 // makes collisions affect buoys less 

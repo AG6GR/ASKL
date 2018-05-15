@@ -424,14 +424,14 @@ function createWater() {
 
 // initializes all buoys in their proper locations
 function createBuoys() {
-  console.log("createBuoys")
+  //console.log("createBuoys")
   buoys.removeSprites();
   left_buoy = createBuoy(person_pos.x);
   right_buoy = createBuoy(person_pos.x + BUOY_SPACING);
   right_buoy.left = left_buoy;
   left_buoy.right = right_buoy;
   farthest_buoy = right_buoy;
-  console.log(left_buoy)
+  //console.log(left_buoy)
 }
 
 // makes collisions affect buoys less 
@@ -466,11 +466,23 @@ function drawCurves() {
   stroke(0);
   strokeWeight(4)
   noFill();
-  for (var i =0; i < buoys.length - 3; i = i+3) {
-    if (buoys[i].visible && buoys[i+1].visible && buoys[i+2].visible && buoys[i+3].visible){
+  var current = left_buoy; // start from leftmost buoy
+  var current_right;
+  var current_right_right;
+  if (current !== undefined) {
+    current_right = current.right;
+    if (current_right !== undefined) {
+      current_right_right =current_right.right;
+    }
+  }
+  while (current !== undefined 
+    && current_right !== undefined 
+    && current_right_right !== undefined 
+    && current_right_right.right !== undefined) {
+    if (current.visible && current_right.visible && current_right_right.visible && current_right_right.right.visible){
 
       // in case we had a number of buoys not divisible by 3
-      if (i == farthest_buoy) {
+      /*if (i == farthest_buoy) {
         bezier(buoys[i].position.x,buoys[i].position.y, 
           buoys[i].position.x + w/(39*3),buoys[i].position.y , 
           buoys[i].position.x + 2*w/(39*3),buoys[i].position.y, 
@@ -499,15 +511,18 @@ function drawCurves() {
           buoys[i+3].position.x + w/(39*3),buoys[i+3].position.y, 
           buoys[i+3].position.x + 2*w/(39*3),buoys[i+3].position.y, 
           buoys[i+3].position.x + w/(39),buoys[i+3].position.y);
-      }
+      }*/
 
-      else {
-        bezier(buoys[i].position.x,buoys[i].position.y, buoys[i+1].position.x,buoys[i+1].position.y, buoys[i+2].position.x,buoys[i+2].position.y, buoys[i+3].position.x,buoys[i+3].position.y);
-      }
+      //else {
+      bezier(current.position.x, current.position.y, 
+        current_right.position.x, current_right.position.y, 
+        current_right_right.position.x, current_right_right.position.y, 
+        current_right_right.right.position.x, current_right_right.right.position.y);
+      //}
     }
 
     // takes care of the beginning of the pool
-    else if (!buoys[i].visible && !buoys[i+1].visible && buoys[i+2].visible && buoys[i+3].visible) {
+    /*else if (!buoys[i].visible && !buoys[i+1].visible && buoys[i+2].visible && buoys[i+3].visible) {
       bezier(buoys[i+2].position.x,buoys[i+2].position.y, 
           buoys[i+2].position.x + w/(39*3),buoys[i+2].position.y, 
           buoys[i+2].position.x + 2*w/(39*3),buoys[i+2].position.y, 
@@ -520,10 +535,14 @@ function drawCurves() {
           buoys[i].position.x + w/(39*3),buoys[i].position.y , 
           buoys[i].position.x + 2*w/(39*3),buoys[i].position.y, 
           buoys[i+2].position.x ,buoys[i+2].position.y);
-    }
+    }*/
+
+      current = current.right;
+      current_right = current_right.right;
+      current_right_right = current_right_right.right;
   }
 
-  var last = buoys.length - 1;
+  /*var last = buoys.length - 1;
 
   // takes care of connecting bits of the buoys together 
   if (buoys[last].visible){
@@ -531,7 +550,7 @@ function drawCurves() {
           buoys[last].position.x + w/(39*3),buoys[last].position.y, 
           buoys[last].position.x + 2*w/(39*3),buoys[last].position.y, 
           buoys[last].position.x + w/(39),buoys[last].position.y);
-  }
+  }*/
   fill(color(0, 100, 230));
   noStroke();
 }
@@ -676,7 +695,7 @@ function draw() {
   /*if (mouseX > 3*w/4)
     person_pos.x += 10;
   if (mouseX < w/4)
-    person_pos.x -= 10;*/ 
+    person_pos.x -= 10;*/
 
   // Update game state
   if (gamestate == STATE_MENU) {

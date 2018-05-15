@@ -327,7 +327,7 @@ function simulateBuoys() {
   }
 
   // Cull extra buoys on left
-  while (left_buoy.position.x <= person_pos.x - width / 2 - 40) {
+  while (left_buoy.position.x <= person_pos.x - width / 2 - BUOY_SPACING * 5) {
     var old_left = left_buoy;
     left_buoy = left_buoy.right;
     buoys.remove(old_left)
@@ -335,7 +335,7 @@ function simulateBuoys() {
   }
 
   // Cull extra buoys on right
-  while (right_buoy.position.x > person_pos.x + width / 2 + 40) {
+  while (right_buoy.position.x > person_pos.x + width / 2 + BUOY_SPACING * 5) {
     var old_right = right_buoy;
     right_buoy = right_buoy.left;
     buoys.remove(right_buoy)
@@ -343,7 +343,7 @@ function simulateBuoys() {
   }
 
   // Add buoys on the left if needed
-  while (left_buoy.position.x > person_pos.x - width / 2 - 20) {
+  while (left_buoy.position.x > person_pos.x - width / 2 - BUOY_SPACING * 2) {
     var old_left = left_buoy;
     left_buoy = createBuoy(old_left.position.x - BUOY_SPACING)
     left_buoy.right = old_left
@@ -351,7 +351,7 @@ function simulateBuoys() {
   }
 
   // Add buoys on the right if needed
-  while (right_buoy.position.x <= person_pos.x + width / 2 + 20) {
+  while (right_buoy.position.x <= person_pos.x + width / 2 + BUOY_SPACING * 2) {
     var old_right = right_buoy;
     right_buoy = createBuoy(old_right.position.x + BUOY_SPACING)
     right_buoy.left = old_right

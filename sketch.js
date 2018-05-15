@@ -188,12 +188,14 @@ function updatePosition() {
   for (var i = 0; i < water.length; i++) {
     if (is_swim_right) {
       if (water[i].position.x < swim_distance - w/2) {
-        water[i].remove();
+        //water[i].remove();
         var waterMolecule = createSprite(random(swim_distance + w/2, swim_distance + w),random(height/2,height), 3, 3);
          waterMolecule.setSpeed(random(1,2), random(0, 360));
         waterMolecule.setCollider("circle", 0,0,3);
         waterMolecule.depth = random(-1.2,1.2);
+        waterMolecule.visible = false;
         water[i] = waterMolecule;
+        //console.log(water.length);
       }
     }
     else {
@@ -203,6 +205,7 @@ function updatePosition() {
         waterMolecule.setSpeed(random(1,2), random(0, 360));
         waterMolecule.setCollider("circle", 0,0,3);
         waterMolecule.depth = random(-1.2,1.2);
+        waterMolecule.visible = false;
         water[i] = waterMolecule;
       }
     }
@@ -280,27 +283,36 @@ function simulateWater() {
 }
 
 function simulateBuoys() {
+  console.log (buoys.length);
   // delete buoys not visible in the scene and create a new one in "front" of the swimmer
   for (var i = 0; i < buoys.length; i++) {
-    if (is_swim_right) {
-      if (buoys[i].position.x < swim_distance - w) {
-        buoys[i].visible = true;
-        buoys[i].addImage(img_orange_buoy);
-        buoys[i].position.x = buoys[farthest_buoy].position.x + w / 39;
-        farthest_buoy++;
-        if (farthest_buoy >= buoys.length) {
-          farthest_buoy = 0;
-          buoys[0].position.x = buoys[buoys.length - 1].position.x+ w / 39;
-        }
+    // disappearing to the left
+    if (buoys[i].position.x < swim_distance - w) {
+      buoys[i].visible = true;
+      buoys[i].addImage(img_orange_buoy);
+      buoys[i].position.x = buoys[farthest_buoy].position.x + w / 39;
+      var r = random(1);
+      if (r < 0.5)
+        buoys[i].setVelocity(0,-5);
+      else buoys[i].setVelocity(0,5);
+      farthest_buoy++;
+      if (farthest_buoy >= buoys.length) {
+        farthest_buoy = 0;
+        buoys[0].position.x = buoys[buoys.length - 1].position.x+ w / 39;
       }
     }
+  }
 
-
-    /*else {
-      if (water[i].position.x > POOL_LENGTH - (swim_distance - POOL_LENGTH) + w/2) {
-        buoys[i].position.x = 
+  if (buoys[farthest_buoy].position.x - person_pos.x > 7/4*w){
+    buoys[farthest_buoy].position.x = buoys[(farthest_buoy + 1)%buoys.length].position.x - w/39;
+    var r = random(1);
+      if (r < 0.5)
+        buoys[farthest_buoy].setVelocity(0,-5);
+      else buoys[farthest_buoy].setVelocity(0,5);
+    farthest_buoy--;
+    if (farthest_buoy < 0) {
+        farthest_buoy = buoys.length - 1;
       }
-    } */
   }
 
   var eps = 15;
@@ -310,11 +322,11 @@ function simulateBuoys() {
     }
     var y = buoys[i].position.y
     var x = buoys[i].position.x
-    if (y <= height/2 - eps) {
-      buoys[i].setVelocity(buoys[i].velocity.x, 3);
+    if (y <= height/2 - eps + 15) {
+      buoys[i].setVelocity(0, random(3));
     }
     if (y >= height/2 + eps) {
-      buoys[i].setVelocity(buoys[i].velocity.x, -3);
+      buoys[i].setVelocity(0, -1*random(3));
     } 
   }
 
@@ -324,17 +336,25 @@ function simulateBuoys() {
     velCopy.push(buoys[i].velocity.y);
   }
 
-  for (var i = 2; i < buoys.length - 2; i++) {
-    var vel = [ velCopy[i - 2],
-                velCopy[i - 1],
+  for (var i = 0; i < buoys.length; i++) {
+    var vel = [ velCopy[(i - 2 + buoys.length)%buoys.length],
+                velCopy[(i - 1 + buoys.length)%buoys.length],
                 velCopy[i],
-                velCopy[i + 1],
-                velCopy[i + 2]];
+                velCopy[(i + 1 + buoys.length)%buoys.length],
+                velCopy[(i + 2 + buoys.length)%buoys.length]];
     var weightedVel = 0;
     for (var j = 0; j < 5; j++) {
       weightedVel += vel[j]*weights[j];
     }
-    buoys[i].setVelocity(buoys[i].velocity.x, weightedVel);
+    buoys[i].setVelocity(buoys[i].velocity.x, weightedVel*1.05);
+  }
+
+  for (var i = 0; i < buoys.length - 1; i++) {
+    var x1 = buoys[i].position.x;
+    var y1 = buoys[i].position.y;
+    var x2 = buoys[i+1].position.x;
+    var y2 = buoys[i+1].position.y;
+    //bezier(x1, y1, (2*x1 + x2)/3, (2*y1 + y2)/3, (x1 + 2*x2)/3, (y1 + 2*y2)/3, x2, y2);
   }
 
 
@@ -342,26 +362,29 @@ function simulateBuoys() {
 
 // initializes all water molecules with random velocity
 function createWater() {
-  for (var i = 0; i < width/10; i++) {
+  for (var i = 0; i < 1; i++) {
     var waterMolecule = createSprite(random(swim_distance-w/2, swim_distance + w/2),random(height/2,height), 3, 3);
     waterMolecule.setSpeed(random(1,2), random(0, 360));
     waterMolecule.setCollider("circle", 0,0,3);
     waterMolecule.depth = random(-1.2,1.2);
+    waterMolecule.visible = false;
     water.add(waterMolecule);
   }
 }
 
 // initializes all buoys in their proper locations
 function createBuoys() {
+  buoys.removeSprites();
+
   for (var i = 0; i < 100; i++) {
-    var singleBuoy = createSprite(w / 39 * i - w/2, h/2 - 15, 12, 30);
+    var singleBuoy = createSprite(w / 39 * i - w/2, h/2, 12, 30);
     singleBuoy.setCollider("rectangle", 0, 0, 12, 30);
     if (i < 66)
       singleBuoy.addImage(img_red_buoy);
     else {
       singleBuoy.addImage(img_orange_buoy);
     }
-    singleBuoy.depth = random(1);
+    singleBuoy.depth = -2;
     buoys.add(singleBuoy);
   }
 
@@ -408,6 +431,8 @@ function resetGame() {
   elapsed_frames = 0;
   avg_fps = 0;
   drown_time = DROWNING_TIME;
+
+  createBuoys();
   
 }
 
@@ -523,8 +548,8 @@ function setup() {
 
   water = new Group();
   createWater();
-  buoys = new Group();
-  createBuoys();
+  
+  //createBuoys();
 
   //cheat();
 }
@@ -532,9 +557,10 @@ function setup() {
 function draw() {
 
   //DEBUGGING CODE DELETE WHEN DONE 
-  if (mouseX > w/2)
-    person_pos.x += mouseX/100;
-  else person_pos.x -= mouseX/10; 
+  if (mouseX > 3*w/4)
+    person_pos.x += 10;
+  if (mouseX < w/4)
+    person_pos.x -= 10; 
 
   // Update game state
   if (gamestate == STATE_MENU) {

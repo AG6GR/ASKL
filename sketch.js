@@ -458,7 +458,8 @@ function drawBackground() {
 function drawForeground() {
 
   //fill(0);
-  fill('rgba(200, 238, 255, 0.4)');
+  
+  fill('rgba(86, 210, 255, 0.4)');
   var current = left_buoy; // start from leftmost buoy
   var current_right;
   var current_right_right;
@@ -497,7 +498,7 @@ function drawForeground() {
   bezierVertex(POOL_LENGTH + 300, height/2, POOL_LENGTH + 275, height/2, POOL_LENGTH + 285, height);
   vertex(POOL_LENGTH + 290, height);
   endShape();
-
+  
   //image(img_water, -w/2, 0);
   fill(color(0, 100, 230));
   noStroke();
@@ -630,7 +631,7 @@ function preload() {
   img_leg = loadImage("images/leg2.png");
   img_lower_arm = loadImage("images/lower_arm2.png");
   img_upper_arm = loadImage("images/upper_arm.png");
-  img_full_background = loadImage("images/Full_Background.png");
+  img_full_background = loadImage("images/Full_Background2.png");
   img_water = loadImage("images/Water.png");
   img_orange_buoy = loadImage("images/Orange_buoy.png");
   img_black_buoy = loadImage("images/Black_buoy.png");

@@ -457,13 +457,56 @@ function drawBackground() {
 
 function drawForeground() {
 
-  image(img_water, -w/2, 0);
+  //fill(0);
+  fill('rgba(200, 238, 255, 0.4)');
+  var current = left_buoy; // start from leftmost buoy
+  var current_right;
+  var current_right_right;
+  if (current !== undefined) {
+    current_right = current.right;
+    if (current_right !== undefined) {
+      current_right_right =current_right.right;
+    }
+  }
+
+  beginShape();
+  vertex(max(-390, person_pos.x - 600), height);
+  bezierVertex(max(-390, person_pos.x - 600), height, 
+               max(-390, person_pos.x - 600), current.position.y, 
+               max(-390, person_pos.x - 600), current_right.position.y);
+  
+
+  while (current !== undefined 
+    && current_right !== undefined 
+    && current_right_right !== undefined 
+    && current_right_right.right !== undefined) {
+    if (current.visible && current_right.visible && current_right_right.visible && current_right_right.right.visible){
+
+      bezierVertex(current.position.x, current.position.y, 
+        current_right.position.x, current_right.position.y, 
+        current_right_right.position.x, current_right_right.position.y);
+
+    }
+
+    current = current.right;
+    current_right = current_right.right;
+    current_right_right = current_right_right.right;
+
+  }
+
+  bezierVertex(POOL_LENGTH + 300, height/2, POOL_LENGTH + 275, height/2, POOL_LENGTH + 285, height);
+  vertex(POOL_LENGTH + 290, height);
+  endShape();
+
+  //image(img_water, -w/2, 0);
+  fill(color(0, 100, 230));
+  noStroke();
 
 }
 
 // draw bezier curves connecting all the buoys
 function drawCurves() {
-  stroke(0);
+  stroke(255);
   strokeWeight(4)
   noFill();
   var current = left_buoy; // start from leftmost buoy

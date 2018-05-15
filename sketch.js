@@ -322,7 +322,7 @@ function createBuoy(x_pos) {
 function simulateBuoys() {
   // buoys disappearing from behind you and appearing in front of you
   // On reset, recreate all buoys
-  if (typeof left_buoy == 'undefined') {
+  if (typeof left_buoy == 'undefined' || buoys.length == 0) {
     createBuoys()
   }
 
@@ -332,6 +332,8 @@ function simulateBuoys() {
     left_buoy = left_buoy.right;
     buoys.remove(old_left)
     old_left.remove()
+    if (buoys.length == 2)
+      createBuoys()
   }
 
   // Cull extra buoys on right
@@ -340,6 +342,8 @@ function simulateBuoys() {
     right_buoy = right_buoy.left;
     buoys.remove(right_buoy)
     right_buoy.remove()
+    if (buoys.length == 2)
+      createBuoys()
   }
 
   // Add buoys on the left if needed

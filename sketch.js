@@ -17,6 +17,7 @@ STATE_MENU = 0
 STATE_RUNNING = 1
 STATE_END = 2
 STATE_WIN = 3
+var DEBUG_EASY = false
 
 // Image assets
 var img_body, img_leg, img_lower_arm, img_upper_arm;
@@ -52,6 +53,8 @@ var arm_right_upper, arm_right_lower;
 var bodyParts // list of all body parts
 var water; // list of all water molecules
 var buoys; // list of all the buoys
+var left_buoy; // Leftmost buoy
+var right_buoy; // Rightmost buoy
 var farthest_buoy; // farthest forward buoy so far
 
 // ========== CALLBACKS/EVENT HANLDERS ========== //
@@ -84,6 +87,10 @@ function keyPressed() {
       arm_right_lower.vel_rotation = ARM_LOWER_VEL_ROTATION;
     } else {
       arm_right_lower.vel_rotation = -ARM_LOWER_VEL_ROTATION;
+    }
+    if (DEBUG_EASY) {
+      arm_right_upper.vel_rotation = -ARM_UPPER_VEL_ROTATION;
+      arm_left_upper.vel_rotation = -ARM_UPPER_VEL_ROTATION;
     }
   }
 }
@@ -244,8 +251,11 @@ function updateForce() {
   }
 
   // Arms rotate body
-  person_vel_rot -= 0.2 * (arm_left_upper.vel_rotation - 0.05 * abs(180 - arm_left_lower.rel_rotation))
-
+  if (DEBUG_EASY)
+    person_vel_rot -= 0.2 * (arm_left_upper.vel_rotation - 0.05)
+  else 
+    person_vel_rot -= 0.2 * (arm_left_upper.vel_rotation - 0.05 * abs(180 - arm_left_lower.rel_rotation))
+  
   // Passively sink head first
   person_vel_rot += 0.1
 
@@ -283,64 +293,69 @@ function simulateWater() {
   }
 }
 
+var BUOY_SPACING = w / 39;
+
+function createBuoy(x_pos) {
+  var new_buoy = createSprite(x_pos, h/2, 12, 30);
+  new_buoy.setCollider("rectangle", 0, 0, 12, 30);
+  
+  // Assign correct color depending on x position
+  if (x_pos < 5*PIX_PER_M || x_pos > POOL_LENGTH - 5*PIX_PER_M)
+    new_buoy.addImage(img_red_buoy);
+  else if (Math.round(new_buoy.position.x * (PIX_PER_M - 100))%2 == 0)
+     new_buoy.addImage(img_orange_buoy);
+  else new_buoy.addImage(img_black_buoy);
+
+  // give it some random speed 
+  var r = random(1);
+    if (r < 0.5)
+      new_buoy.setVelocity(0,-5);
+    else new_buoy.setVelocity(0,5);
+
+  new_buoy.depth = -2;
+  new_buoy.left = undefined;
+  new_buoy.right = undefined;
+  buoys.add(new_buoy)
+  return new_buoy;
+}
+
 function simulateBuoys() {
-
-  //console.log (buoys.length);
   // buoys disappearing from behind you and appearing in front of you
-  for (var i = 0; i < buoys.length; i++) {
-    // if the buoy is relatively far off the screen to the left 
-    if (buoys[i].position.x < person_pos.x - w) {
-      buoys[i].visible = true;
-
-      // decide what color it should be
-      if (buoys[farthest_buoy].position.x > POOL_LENGTH - 5*PIX_PER_M)
-        buoys[farthest_buoy].addImage(img_red_buoy);
-      else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
-       buoys[i].addImage(img_orange_buoy);
-      else buoys[i].addImage(img_black_buoy);
-
-      // make it one farther than the current farthest
-      buoys[i].position.x = buoys[farthest_buoy].position.x + w / 39;
-
-      // give it some random speed 
-      var r = random(1);
-      if (r < 0.5)
-        buoys[i].setVelocity(0,-5);
-      else buoys[i].setVelocity(0,5);
-
-      // update the pointer to the furthest left buoy
-      farthest_buoy++;
-      if (farthest_buoy >= buoys.length) {
-          farthest_buoy = 0;
-          buoys[0].position.x = buoys[buoys.length - 1].position.x+ w / 39;
-      }
-    }
+  // On reset, recreate all buoys
+  if (typeof left_buoy == 'undefined') {
+    createBuoys()
   }
 
-  // if the LAST buoy is relatively far off the screen to the right
-  // this is probably where stuff is going wrong if any 
-  if (buoys[farthest_buoy].position.x - person_pos.x > 7/4*w){
-    // set the last buoy to the right of the current closest buoy
-    buoys[farthest_buoy].position.x = buoys[(farthest_buoy + 1)%buoys.length].position.x - w/39;
+  // Cull extra buoys on left
+  while (left_buoy.position.x <= person_pos.x - width / 2 - 40) {
+    var old_left = left_buoy;
+    left_buoy = left_buoy.right;
+    buoys.remove(old_left)
+    old_left.remove()
+  }
 
-    // decide what color it should be 
-    if (buoys[farthest_buoy].position.x < 5*PIX_PER_M)
-      buoys[farthest_buoy].addImage(img_red_buoy);
-    else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
-       buoys[farthest_buoy].addImage(img_orange_buoy);
-    else buoys[farthest_buoy].addImage(img_black_buoy);
+  // Cull extra buoys on right
+  while (right_buoy.position.x > person_pos.x + width / 2 + 40) {
+    var old_right = right_buoy;
+    right_buoy = right_buoy.left;
+    buoys.remove(right_buoy)
+    right_buoy.remove()
+  }
 
-    // give it some random speed 
-    var r = random(1);
-      if (r < 0.5)
-        buoys[farthest_buoy].setVelocity(0,-5);
-      else buoys[farthest_buoy].setVelocity(0,5);
+  // Add buoys on the left if needed
+  while (left_buoy.position.x > person_pos.x - width / 2 - 20) {
+    var old_left = left_buoy;
+    left_buoy = createBuoy(old_left.position.x - BUOY_SPACING)
+    left_buoy.right = old_left
+    old_left.left = left_buoy
+  }
 
-    // update what the farthestleft buoy should be 
-    farthest_buoy--;
-    if (farthest_buoy < 0) {
-        farthest_buoy = buoys.length - 1;
-    }
+  // Add buoys on the right if needed
+  while (right_buoy.position.x <= person_pos.x + width / 2 + 20) {
+    var old_right = right_buoy;
+    right_buoy = createBuoy(old_right.position.x + BUOY_SPACING)
+    right_buoy.left = old_right
+    old_right.right = right_buoy
   }
 
   // buoys should switch direction if they stray too far from the water line
@@ -409,22 +424,14 @@ function createWater() {
 
 // initializes all buoys in their proper locations
 function createBuoys() {
+  console.log("createBuoys")
   buoys.removeSprites();
-
-  for (var i = 0; i < 100; i++) {
-    var singleBuoy = createSprite(w / 39 * i - w/2, h/2, 12, 30);
-    singleBuoy.setCollider("rectangle", 0, 0, 12, 30);
-    if (w / 39 * i - w/2 < 5*PIX_PER_M)
-      singleBuoy.addImage(img_red_buoy);
-    else if (Math.round(singleBuoy.position.x * (PIX_PER_M - 100))%2 == 0)
-       singleBuoy.addImage(img_orange_buoy);
-     else singleBuoy.addImage(img_black_buoy);
-    singleBuoy.depth = -2;
-    buoys.add(singleBuoy);
-  }
-
-
-  farthest_buoy = buoys.length - 1;
+  left_buoy = createBuoy(person_pos.x);
+  right_buoy = createBuoy(person_pos.x + BUOY_SPACING);
+  right_buoy.left = left_buoy;
+  left_buoy.right = right_buoy;
+  farthest_buoy = right_buoy;
+  console.log(left_buoy)
 }
 
 // makes collisions affect buoys less 
@@ -544,7 +551,6 @@ function resetGame() {
   drown_time = DROWNING_TIME;
 
   createBuoys();
-  
 }
 
 function win() {
@@ -660,9 +666,7 @@ function setup() {
   water = new Group();
   createWater();
 
-
-  
-  //createBuoys();
+  createBuoys();
 
   //cheat();
 }

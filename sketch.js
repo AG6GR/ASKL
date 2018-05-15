@@ -302,7 +302,7 @@ function createBuoy(x_pos) {
   // Assign correct color depending on x position
   if (x_pos < 5*PIX_PER_M || x_pos > POOL_LENGTH - 5*PIX_PER_M)
     new_buoy.addImage(img_red_buoy);
-  else if (Math.round(new_buoy.position.x * (PIX_PER_M - 100))%2 == 0)
+  else if (Math.floor((x_pos - 5 * PIX_PER_M) / BUOY_SPACING / 6) % 2 == 0)
      new_buoy.addImage(img_orange_buoy);
   else new_buoy.addImage(img_black_buoy);
 

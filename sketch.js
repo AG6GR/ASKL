@@ -283,13 +283,17 @@ function simulateWater() {
 }
 
 function simulateBuoys() {
-  console.log (buoys.length);
+  //console.log (buoys.length);
   // delete buoys not visible in the scene and create a new one in "front" of the swimmer
   for (var i = 0; i < buoys.length; i++) {
     // disappearing to the left
-    if (buoys[i].position.x < swim_distance - w) {
+    if (buoys[i].position.x < person_pos.x - w) {
       buoys[i].visible = true;
-      buoys[i].addImage(img_orange_buoy);
+      if (buoys[farthest_buoy].position.x > POOL_LENGTH - 5*PIX_PER_M)
+        buoys[farthest_buoy].addImage(img_red_buoy);
+      else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
+       buoys[i].addImage(img_orange_buoy);
+     else buoys[i].addImage(img_black_buoy);
       buoys[i].position.x = buoys[farthest_buoy].position.x + w / 39;
       var r = random(1);
       if (r < 0.5)
@@ -303,8 +307,14 @@ function simulateBuoys() {
     }
   }
 
+  // disappearing to the right
   if (buoys[farthest_buoy].position.x - person_pos.x > 7/4*w){
     buoys[farthest_buoy].position.x = buoys[(farthest_buoy + 1)%buoys.length].position.x - w/39;
+    if (buoys[farthest_buoy].position.x < 5*PIX_PER_M)
+      buoys[farthest_buoy].addImage(img_red_buoy);
+    else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
+       buoys[farthest_buoy].addImage(img_orange_buoy);
+     else buoys[farthest_buoy].addImage(img_black_buoy);
     var r = random(1);
       if (r < 0.5)
         buoys[farthest_buoy].setVelocity(0,-5);
@@ -347,6 +357,9 @@ function simulateBuoys() {
       weightedVel += vel[j]*weights[j];
     }
     buoys[i].setVelocity(buoys[i].velocity.x, weightedVel*1.05);
+    if (buoys[i].position.x < -w/2 + 0.5*PIX_PER_M || buoys[i].position.x > POOL_LENGTH + 1.1*PIX_PER_M) 
+      buoys[i].visible = false;
+    else buoys[i].visible = true;
   }
 
   for (var i = 0; i < buoys.length - 1; i++) {
@@ -379,11 +392,11 @@ function createBuoys() {
   for (var i = 0; i < 100; i++) {
     var singleBuoy = createSprite(w / 39 * i - w/2, h/2, 12, 30);
     singleBuoy.setCollider("rectangle", 0, 0, 12, 30);
-    if (i < 66)
+    if (w / 39 * i - w/2 < 5*PIX_PER_M)
       singleBuoy.addImage(img_red_buoy);
-    else {
-      singleBuoy.addImage(img_orange_buoy);
-    }
+    else if (Math.round(singleBuoy.position.x * (PIX_PER_M - 100))%2 == 0)
+       singleBuoy.addImage(img_orange_buoy);
+     else singleBuoy.addImage(img_black_buoy);
     singleBuoy.depth = -2;
     buoys.add(singleBuoy);
   }

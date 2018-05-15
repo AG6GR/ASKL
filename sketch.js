@@ -209,8 +209,8 @@ function updatePosition() {
         water[i] = waterMolecule;
       }
     }
-
   }
+
 }
 
 // Move body part positions based on current velocities
@@ -233,6 +233,7 @@ function updateVelocity() {
     arm_right_lower.vel_rotation = -arm_right_lower.vel_rotation;
   }
   arm_right_lower.rel_rotation += arm_right_lower.vel_rotation
+
 }
 
 // Simulate movement through water and change velocities accordingly
@@ -283,48 +284,66 @@ function simulateWater() {
 }
 
 function simulateBuoys() {
+
   //console.log (buoys.length);
-  // delete buoys not visible in the scene and create a new one in "front" of the swimmer
+  // buoys disappearing from behind you and appearing in front of you
   for (var i = 0; i < buoys.length; i++) {
-    // disappearing to the left
+    // if the buoy is relatively far off the screen to the left 
     if (buoys[i].position.x < person_pos.x - w) {
       buoys[i].visible = true;
+
+      // decide what color it should be
       if (buoys[farthest_buoy].position.x > POOL_LENGTH - 5*PIX_PER_M)
         buoys[farthest_buoy].addImage(img_red_buoy);
       else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
        buoys[i].addImage(img_orange_buoy);
-     else buoys[i].addImage(img_black_buoy);
+      else buoys[i].addImage(img_black_buoy);
+
+      // make it one farther than the current farthest
       buoys[i].position.x = buoys[farthest_buoy].position.x + w / 39;
+
+      // give it some random speed 
       var r = random(1);
       if (r < 0.5)
         buoys[i].setVelocity(0,-5);
       else buoys[i].setVelocity(0,5);
+
+      // update the pointer to the furthest left buoy
       farthest_buoy++;
       if (farthest_buoy >= buoys.length) {
-        farthest_buoy = 0;
-        buoys[0].position.x = buoys[buoys.length - 1].position.x+ w / 39;
+          farthest_buoy = 0;
+          buoys[0].position.x = buoys[buoys.length - 1].position.x+ w / 39;
       }
     }
   }
 
-  // disappearing to the right
+  // if the LAST buoy is relatively far off the screen to the right
+  // this is probably where stuff is going wrong if any 
   if (buoys[farthest_buoy].position.x - person_pos.x > 7/4*w){
+    // set the last buoy to the right of the current closest buoy
     buoys[farthest_buoy].position.x = buoys[(farthest_buoy + 1)%buoys.length].position.x - w/39;
+
+    // decide what color it should be 
     if (buoys[farthest_buoy].position.x < 5*PIX_PER_M)
       buoys[farthest_buoy].addImage(img_red_buoy);
     else if (Math.round(buoys[farthest_buoy].position.x * (PIX_PER_M - 100))%2 == 0)
        buoys[farthest_buoy].addImage(img_orange_buoy);
-     else buoys[farthest_buoy].addImage(img_black_buoy);
+    else buoys[farthest_buoy].addImage(img_black_buoy);
+
+    // give it some random speed 
     var r = random(1);
       if (r < 0.5)
         buoys[farthest_buoy].setVelocity(0,-5);
       else buoys[farthest_buoy].setVelocity(0,5);
+
+    // update what the farthestleft buoy should be 
     farthest_buoy--;
     if (farthest_buoy < 0) {
         farthest_buoy = buoys.length - 1;
-      }
+    }
   }
 
+  // buoys should switch direction if they stray too far from the water line
   var eps = 15;
   for (var i = 0; i < buoys.length; i++) {
     if (buoys[i].position.x < -w/2 + 125) {
@@ -332,6 +351,8 @@ function simulateBuoys() {
     }
     var y = buoys[i].position.y
     var x = buoys[i].position.x
+
+    // give them some random speed 
     if (y <= height/2 - eps + 15) {
       buoys[i].setVelocity(0, random(3));
     }
@@ -340,36 +361,37 @@ function simulateBuoys() {
     } 
   }
 
-  var weights = [1/19, 4/19, 9/19, 4/19, 1/19];
+  // do an average over the velocities of nearby buoys in order to get smooth oscillations
+  var weights = [1/19, 4/19, 9/19, 4/19, 1/19]; // effect scales down with distance^2 from buoy of interest
   var velCopy = [];
+
+  // deep copy of velocities 
   for (var i = 0; i < buoys.length; i++) {
     velCopy.push(buoys[i].velocity.y);
   }
 
+  // take an average over 4 nearest neighbors 
   for (var i = 0; i < buoys.length; i++) {
     var vel = [ velCopy[(i - 2 + buoys.length)%buoys.length],
                 velCopy[(i - 1 + buoys.length)%buoys.length],
                 velCopy[i],
                 velCopy[(i + 1 + buoys.length)%buoys.length],
                 velCopy[(i + 2 + buoys.length)%buoys.length]];
+
+    // apply weights
     var weightedVel = 0;
     for (var j = 0; j < 5; j++) {
       weightedVel += vel[j]*weights[j];
     }
+
+    // the 1.05 is because stuff just wasn't jiggly enough 
     buoys[i].setVelocity(buoys[i].velocity.x, weightedVel*1.05);
+
+    // check if things should be invisible (the two ends of the pool)
     if (buoys[i].position.x < -w/2 + 0.5*PIX_PER_M || buoys[i].position.x > POOL_LENGTH + 1.1*PIX_PER_M) 
       buoys[i].visible = false;
     else buoys[i].visible = true;
   }
-
-  for (var i = 0; i < buoys.length - 1; i++) {
-    var x1 = buoys[i].position.x;
-    var y1 = buoys[i].position.y;
-    var x2 = buoys[i+1].position.x;
-    var y2 = buoys[i+1].position.y;
-    //bezier(x1, y1, (2*x1 + x2)/3, (2*y1 + y2)/3, (x1 + 2*x2)/3, (y1 + 2*y2)/3, x2, y2);
-  }
-
 
 }
 
@@ -401,6 +423,7 @@ function createBuoys() {
     buoys.add(singleBuoy);
   }
 
+
   farthest_buoy = buoys.length - 1;
 }
 
@@ -429,6 +452,14 @@ function drawForeground() {
 
   image(img_water, -w/2, 0);
 
+}
+
+function drawCurves() {
+  stroke(0);
+  noFill();
+  bezier(buoys[6].position.x,buoys[6].position.y, buoys[7].position.x,buoys[7].position.y, buoys[8].position.x,buoys[8].position.y, buoys[9].position.x,buoys[9].position.y);
+  fill(color(0, 100, 230));
+  noStroke();
 }
 
 function resetGame() {
@@ -561,6 +592,8 @@ function setup() {
 
   water = new Group();
   createWater();
+
+
   
   //createBuoys();
 
@@ -568,12 +601,11 @@ function setup() {
 }
 
 function draw() {
-
   //DEBUGGING CODE DELETE WHEN DONE 
-  if (mouseX > 3*w/4)
+  /*if (mouseX > 3*w/4)
     person_pos.x += 10;
   if (mouseX < w/4)
-    person_pos.x -= 10; 
+    person_pos.x -= 10; */
 
   // Update game state
   if (gamestate == STATE_MENU) {
@@ -629,6 +661,7 @@ function draw() {
   drawBackground();
   drawSprites();
   drawForeground();
+  drawCurves();
 
   // camera position
   camera.position.x = person_pos.x;
